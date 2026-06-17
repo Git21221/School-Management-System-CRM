@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { Course } from "@/types";
 import { Modal, FormField, Btn, inputCls, selectCls } from "@/components/shared";
+import { courseFormSchema } from "@/lib/validation/course";
+import { validateForm } from "@/lib/validation/formErrors";
 
 export function CourseFormModal({
   title,
@@ -25,16 +27,20 @@ export function CourseFormModal({
   const up = (k: string) => (v: string) => setF(p => ({ ...p, [k]: v }));
 
   const handleSave = () => {
-    if (!f.name.trim() || !f.duration || !f.fees) {
-      toast.error("Name, Duration and Fees are required");
+    const checked = validateForm(courseFormSchema, {
+      name: f.name,
+      duration: f.duration,
+      fees: f.fees,
+      description: f.description,
+      status: f.status as "Active" | "Inactive",
+    });
+    if (!checked.ok) {
+      toast.error(checked.message);
       return;
     }
     onSave({
-      name: f.name,
-      duration: f.duration,
-      fees: parseInt(f.fees) || 0,
-      description: f.description,
-      status: f.status,
+      ...checked.data,
+      description: checked.data.description ?? "",
     });
   };
 

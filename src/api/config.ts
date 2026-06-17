@@ -9,4 +9,5 @@ export function getApiUrl(): string {
   return "/api";
 }
 
-export const API_ENABLED = import.meta.env.VITE_API_ENABLED === "true";
+/** Live API mode — default on; set VITE_API_ENABLED=false for offline demo. */
+export const API_ENABLED = import.meta.env.VITE_API_ENABLED !== "false";

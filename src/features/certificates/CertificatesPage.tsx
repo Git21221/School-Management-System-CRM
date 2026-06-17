@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Award, Eye, Printer, GraduationCap } from "lucide-react";
-import { Student, Certificate, InstituteSettings } from "@/types";
+import { Student, Certificate, InstituteSettings, Course, AttendanceRecord, ExamMarkRecord } from "@/types";
 import { TODAY, handlePrint } from "@/lib/utils";
+import { checkCertificateEligibility } from "@/lib/certificateEligibility";
 import {
   SectionHeader,
   Btn,
@@ -14,19 +15,28 @@ import {
   selectCls,
   inputCls,
 } from "@/components/shared";
+import { API_ENABLED } from "@/api/config";
+import { certificatesService, studentToCertPayload } from "@/api/services/certificates.service";
+import { ApiError } from "@/api/client";
 
 export interface CertificatesPageProps {
   students: Student[];
+  courses: Course[];
   certificates: Certificate[];
   addCertificate: (certificate: Certificate) => void;
   settings: InstituteSettings;
+  attendanceRecords: AttendanceRecord[];
+  examMarks: ExamMarkRecord[];
 }
 
 export function CertificatesPage({
   students,
+  courses,
   certificates,
   addCertificate,
   settings,
+  attendanceRecords,
+  examMarks,
 }: CertificatesPageProps) {
   const [showIssue, setShowIssue] = useState(false);
   const [showPreview, setShowPreview] = useState<Certificate | null>(null);
@@ -38,33 +48,61 @@ export function CertificatesPage({
   });
   const upIF = (k: string) => (v: string) => setIssueForm(p => ({ ...p, [k]: v }));
 
-  const handleIssue = () => {
-    const student = students.find(s => s.id === issueForm.studentId);
+  const selectedStudent = students.find(s => s.id === issueForm.studentId);
+  const eligibility = selectedStudent
+    ? checkCertificateEligibility(selectedStudent, certificates, attendanceRecords, examMarks)
+    : null;
+
+  const handleIssue = async () => {
+    const student = selectedStudent;
     if (!student) {
       toast.error("Please select a student");
       return;
     }
-    const year = new Date().getFullYear();
-    const seq = String(certificates.length + 1).padStart(3, "0");
-    const newCert: Certificate = {
-      certNo: `CERT-${year}-${seq}`,
-      studentId: student.id,
-      studentName: student.name,
-      course: student.course,
-      issueDate: issueForm.issueDate,
-      grade: issueForm.grade,
-      authorisedBy: issueForm.authorisedBy,
-    };
-    addCertificate(newCert);
-    toast.success(`Certificate issued to ${student.name}!`);
-    setIssueForm({
-      studentId: "",
-      grade: "A",
-      authorisedBy: settings.certificate.authorisedBy,
-      issueDate: TODAY,
-    });
-    setShowIssue(false);
-    setShowPreview(newCert);
+    const check = checkCertificateEligibility(student, certificates, attendanceRecords, examMarks);
+    if (!check.eligible) {
+      toast.error("Student is not eligible for a certificate", {
+        description: check.reasons.join(" · "),
+      });
+      return;
+    }
+    try {
+      let newCert: Certificate;
+      if (API_ENABLED) {
+        const payload = studentToCertPayload(
+          student,
+          courses,
+          issueForm.grade,
+          issueForm.authorisedBy,
+          issueForm.issueDate
+        );
+        newCert = await certificatesService.issue(payload);
+      } else {
+        const year = new Date().getFullYear();
+        const seq = String(certificates.length + 1).padStart(3, "0");
+        newCert = {
+          certNo: `CERT-${year}-${seq}`,
+          studentId: student.id,
+          studentName: student.name,
+          course: student.course,
+          issueDate: issueForm.issueDate,
+          grade: issueForm.grade,
+          authorisedBy: issueForm.authorisedBy,
+        };
+      }
+      addCertificate(newCert);
+      toast.success(`Certificate issued to ${student.name}!`);
+      setIssueForm({
+        studentId: "",
+        grade: "A",
+        authorisedBy: settings.certificate.authorisedBy,
+        issueDate: TODAY,
+      });
+      setShowIssue(false);
+      setShowPreview(newCert);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to issue certificate");
+    }
   };
 
   return (
@@ -184,6 +222,25 @@ export function CertificatesPage({
               />
             </FormField>
           </div>
+          {eligibility && issueForm.studentId && (
+            <div
+              className={`mt-4 p-3 rounded-lg text-xs ${
+                eligibility.eligible
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                  : "bg-red-50 text-red-800 border border-red-200"
+              }`}
+            >
+              {eligibility.eligible ? (
+                <p>✓ Student meets all eligibility requirements.</p>
+              ) : (
+                <ul className="list-disc pl-4 space-y-0.5">
+                  {eligibility.reasons.map(r => (
+                    <li key={r}>{r}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           <div className="flex justify-end gap-2 mt-5 pt-5 border-t border-border">
             <Btn variant="secondary" onClick={() => setShowIssue(false)}>
               Cancel

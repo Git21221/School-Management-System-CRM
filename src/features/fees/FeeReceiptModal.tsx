@@ -1,25 +1,39 @@
 import { GraduationCap, Printer } from "lucide-react";
-import { Payment, Student } from "@/types";
+import { Payment, Student, InstituteSettings } from "@/types";
 import { Modal, Btn } from "@/components/shared";
 import { FMT, handlePrint } from "@/lib/utils";
+import { resolveUploadUrl } from "@/lib/uploads";
 
 export interface FeeReceiptModalProps {
   receipt: Payment;
   student: Student | undefined;
+  settings: InstituteSettings;
   onClose: () => void;
 }
 
-export function FeeReceiptModal({ receipt, student, onClose }: FeeReceiptModalProps) {
+export function FeeReceiptModal({ receipt, student, settings, onClose }: FeeReceiptModalProps) {
+  const logoUrl = resolveUploadUrl(settings.logoUrl);
+  const showLogo = settings.receipt.showLogo?.toLowerCase() !== "no";
   return (
     <Modal title="Fee Receipt" onClose={onClose}>
       <div className="border border-border rounded-xl p-6 bg-muted/10">
         <div className="text-center mb-4 pb-4 border-b border-border">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center mx-auto mb-2">
-            <GraduationCap size={18} className="text-white" />
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center mx-auto mb-2 overflow-hidden">
+            {showLogo && logoUrl ? (
+              <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <GraduationCap size={18} className="text-white" />
+            )}
           </div>
-          <h2 className="text-base font-bold text-foreground">TechAcademy</h2>
-          <p className="text-xs text-muted-foreground">123, Tech Park, Bangalore – 560001</p>
-          <p className="text-xs text-muted-foreground">+91-9876540000 · info@techacademy.com</p>
+          <h2 className="text-base font-bold text-foreground">{settings.name}</h2>
+          {settings.address && (
+            <p className="text-xs text-muted-foreground">{settings.address}</p>
+          )}
+          {(settings.phone || settings.email) && (
+            <p className="text-xs text-muted-foreground">
+              {[settings.phone, settings.email].filter(Boolean).join(" · ")}
+            </p>
+          )}
         </div>
         <div className="flex justify-between mb-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Fee Receipt</h3>
@@ -71,7 +85,8 @@ export function FeeReceiptModal({ receipt, student, onClose }: FeeReceiptModalPr
           </tbody>
         </table>
         <p className="text-xs text-center text-muted-foreground">
-          Mode: {receipt.mode} · Thank you for your payment!
+          Mode: {receipt.mode}
+          {settings.receipt.footerText ? ` · ${settings.receipt.footerText}` : " · Thank you for your payment!"}
         </p>
       </div>
       <div className="flex justify-end gap-2 mt-4">

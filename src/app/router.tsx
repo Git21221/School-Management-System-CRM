@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -9,10 +9,17 @@ import {
 } from "react-router";
 import { useAppStore } from "@/store/useAppStore";
 import { AppShell } from "@/components/layout/AppShell";
-import { LogoutDialog } from "@/components/shared";
+import { LogoutDialog, PageSkeleton } from "@/components/shared";
 import { ProfileModal } from "@/components/layout/ProfileModal";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import { User } from "@/types";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import { useApiSync } from "@/hooks/useApiSync";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import { useAuthBootstrap } from "@/hooks/useAuthBootstrap";
+import { API_ENABLED } from "@/api/config";
+import { authService } from "@/api/services/auth.service";
+import { onAuthExpired } from "@/api/client";
 
 // Lazy-load page components
 const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
@@ -53,6 +60,7 @@ function ProtectedLayout() {
     addPayment,
     exams,
     addExam,
+    deleteExam,
     examMarks,
     setExamMarks,
     certificates,
@@ -61,10 +69,13 @@ function ProtectedLayout() {
     saveAttendanceSession,
     settings,
     updateSettings,
+    feeReminders,
+    queueFeeReminders,
   } = useAppStore();
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { loading: apiLoading } = useApiSync();
 
   const [showLogout, setShowLogout] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -81,168 +92,225 @@ function ProtectedLayout() {
   const unreadCount = notifs.filter((n) => !n.read).length;
 
   const handleNavigate = (id: string) => {
+    if (id.includes("?")) {
+      const [path, query] = id.split("?");
+      navigate(path === "dashboard" ? `/?${query}` : `/${path}?${query}`);
+      return;
+    }
     navigate(id === "dashboard" ? "/" : `/${id}`);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setShowLogout(false);
+    if (API_ENABLED) {
+      try {
+        await authService.logout();
+      } catch {
+        /* clear local session even if API logout fails */
+      }
+    }
     setUser(null);
     navigate("/login");
   };
+
+  useSessionTimeout(true, handleLogout);
 
   return (
     <AppShell
       user={user}
       current={current || "dashboard"}
       unreadCount={unreadCount}
+      students={students}
       onNavigate={handleNavigate}
       onShowProfile={() => setShowProfile(true)}
       onShowLogout={() => setShowLogout(true)}
     >
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      {API_ENABLED && apiLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <p className="text-sm text-muted-foreground">Syncing data from server…</p>
           </div>
-        }
-      >
+        </div>
+      )}
+      <Suspense fallback={<PageSkeleton />}>
         <Routes>
           <Route
             path="/"
             element={
-              <ErrorBoundary>
-                <DashboardPage
-                  students={students}
-                  courses={courses}
-                  batches={batches}
-                />
-              </ErrorBoundary>
+              <RoleGuard moduleId="dashboard">
+                <ErrorBoundary>
+                  <DashboardPage
+                    students={students}
+                    courses={courses}
+                    batches={batches}
+                    payments={payments}
+                    settings={settings}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/students"
             element={
-              <ErrorBoundary>
-                <StudentsPage
-                  students={students}
-                  setStudents={setStudents}
-                  courses={courses}
-                  batches={batches}
-                />
-              </ErrorBoundary>
+              <RoleGuard moduleId="students">
+                <ErrorBoundary>
+                  <StudentsPage
+                    students={students}
+                    setStudents={setStudents}
+                    courses={courses}
+                    batches={batches}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/courses"
             element={
-              <ErrorBoundary>
-                <CoursesPage courses={courses} setCourses={setCourses} />
-              </ErrorBoundary>
+              <RoleGuard moduleId="courses">
+                <ErrorBoundary>
+                  <CoursesPage courses={courses} setCourses={setCourses} />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/batches"
             element={
-              <ErrorBoundary>
-                <BatchesPage
-                  batches={batches}
-                  setBatches={setBatches}
-                  courses={courses}
-                  faculty={faculty}
-                  students={students}
-                  onNavigate={handleNavigate}
-                />
-              </ErrorBoundary>
+              <RoleGuard moduleId="batches">
+                <ErrorBoundary>
+                  <BatchesPage
+                    batches={batches}
+                    setBatches={setBatches}
+                    courses={courses}
+                    faculty={faculty}
+                    students={students}
+                    onNavigate={handleNavigate}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/attendance"
             element={
-              <ErrorBoundary>
-                <AttendancePage
-                  students={students}
-                  batches={batches}
-                  attendanceRecords={attendanceRecords}
-                  saveAttendanceSession={saveAttendanceSession}
-                />
-              </ErrorBoundary>
+              <RoleGuard moduleId="attendance">
+                <ErrorBoundary>
+                  <AttendancePage
+                    students={students}
+                    batches={batches}
+                    attendanceRecords={attendanceRecords}
+                    saveAttendanceSession={saveAttendanceSession}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/fees"
             element={
-              <ErrorBoundary>
-                <FeesPage
-                  students={students}
-                  setStudents={setStudents}
-                  payments={payments}
-                  addPayment={addPayment}
-                />
-              </ErrorBoundary>
+              <RoleGuard moduleId="fees">
+                <ErrorBoundary>
+                  <FeesPage
+                    students={students}
+                    setStudents={setStudents}
+                    payments={payments}
+                    addPayment={addPayment}
+                    settings={settings}
+                    feeReminders={feeReminders}
+                    queueFeeReminders={queueFeeReminders}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/faculty"
             element={
-              <ErrorBoundary>
-                <FacultyPage
-                  faculty={faculty}
-                  setFaculty={setFaculty}
-                  courses={courses}
-                />
-              </ErrorBoundary>
+              <RoleGuard moduleId="faculty">
+                <ErrorBoundary>
+                  <FacultyPage
+                    faculty={faculty}
+                    setFaculty={setFaculty}
+                    courses={courses}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/exams"
             element={
-              <ErrorBoundary>
-                <ExamsPage
-                  courses={courses}
-                  batches={batches}
-                  exams={exams}
-                  addExam={addExam}
-                  examMarks={examMarks}
-                  setExamMarks={setExamMarks}
-                />
-              </ErrorBoundary>
+              <RoleGuard moduleId="exams">
+                <ErrorBoundary>
+                  <ExamsPage
+                    courses={courses}
+                    batches={batches}
+                    exams={exams}
+                    addExam={addExam}
+                    deleteExam={deleteExam}
+                    students={students}
+                    examMarks={examMarks}
+                    setExamMarks={setExamMarks}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/certificates"
             element={
-              <ErrorBoundary>
-                <CertificatesPage
-                  students={students}
-                  certificates={certificates}
-                  addCertificate={addCertificate}
-                  settings={settings}
-                />
-              </ErrorBoundary>
+              <RoleGuard moduleId="certificates">
+                <ErrorBoundary>
+                  <CertificatesPage
+                    students={students}
+                    courses={courses}
+                    certificates={certificates}
+                    addCertificate={addCertificate}
+                    settings={settings}
+                    attendanceRecords={attendanceRecords}
+                    examMarks={examMarks}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/reports"
             element={
-              <ErrorBoundary>
-                <ReportsPage students={students} faculty={faculty} />
-              </ErrorBoundary>
+              <RoleGuard moduleId="reports">
+                <ErrorBoundary>
+                  <ReportsPage
+                    students={students}
+                    faculty={faculty}
+                    payments={payments}
+                    attendanceRecords={attendanceRecords}
+                    batches={batches}
+                  />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/notifications"
             element={
-              <ErrorBoundary>
-                <NotificationsPage items={notifs} setItems={setNotifs} />
-              </ErrorBoundary>
+              <RoleGuard moduleId="notifications">
+                <ErrorBoundary>
+                  <NotificationsPage items={notifs} setItems={setNotifs} />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route
             path="/settings"
             element={
-              <ErrorBoundary>
-                <SettingsPanel settings={settings} updateSettings={updateSettings} />
-              </ErrorBoundary>
+              <RoleGuard moduleId="settings">
+                <ErrorBoundary>
+                  <SettingsPanel settings={settings} updateSettings={updateSettings} />
+                </ErrorBoundary>
+              </RoleGuard>
             }
           />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -275,10 +343,30 @@ function ProtectedLayout() {
 
 export function AppRouter() {
   const { user, setUser } = useAppStore();
+  const { ready: authReady } = useAuthBootstrap();
+
+  useEffect(() => {
+    if (!API_ENABLED) return;
+    return onAuthExpired(() => {
+      setUser(null);
+      window.location.assign("/login");
+    });
+  }, [setUser]);
 
   const handleLogin = (u: User) => {
     setUser(u);
   };
+
+  if (API_ENABLED && !authReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <p className="text-sm text-muted-foreground">Restoring session…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>

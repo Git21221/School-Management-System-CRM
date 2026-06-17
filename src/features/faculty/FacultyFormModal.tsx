@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { FacultyMember, Course } from "@/types";
 import { Modal, FormField, Btn, inputCls, selectCls } from "@/components/shared";
+import { facultyFormSchema } from "@/lib/validation/faculty";
+import { validateForm } from "@/lib/validation/formErrors";
 
 export interface FacultyFormModalProps {
   title: string;
@@ -31,11 +33,21 @@ export function FacultyFormModal({
   const up = (k: string) => (v: string) => setF(p => ({ ...p, [k]: v }));
 
   const handleSave = () => {
-    if (!f.name.trim() || !f.subject) {
-      toast.error("Name and Subject are required");
+    const checked = validateForm(facultyFormSchema, f);
+    if (!checked.ok) {
+      toast.error(checked.message);
       return;
     }
-    onSave({ ...f, salary: parseInt(f.salary) || 0 });
+    const d = checked.data;
+    onSave({
+      name: d.name,
+      subject: d.subject,
+      phone: (d.phone as string | null | undefined) ?? "",
+      email: (d.email as string | null | undefined) ?? "",
+      qualification: (d.qualification as string | null | undefined) ?? "",
+      experience: (d.experience as string | null | undefined) ?? "",
+      salary: d.salary,
+    });
   };
 
   return (

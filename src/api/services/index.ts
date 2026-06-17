@@ -1,0 +1,12 @@
+export { authService } from "./auth.service";
+export { studentsService } from "./students.service";
+export { coursesService } from "./courses.service";
+export { batchesService } from "./batches.service";
+export { facultyService } from "./faculty.service";
+export { attendanceService } from "./attendance.service";
+export { feesService } from "./fees.service";
+export { examsService } from "./exams.service";
+export { certificatesService } from "./certificates.service";
+export { notificationsService } from "./notifications.service";
+export { settingsService } from "./settings.service";
+export { dashboardService } from "./dashboard.service";

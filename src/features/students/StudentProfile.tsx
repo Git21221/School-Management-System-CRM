@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ChevronRight,
   Phone,
@@ -6,7 +7,9 @@ import {
   Printer,
   Download,
   Edit2,
+  Camera,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Student } from "@/types";
 import {
   Card,
@@ -15,18 +18,54 @@ import {
   Btn,
 } from "@/components/shared";
 import { FMT, handlePrint, handleExport } from "@/lib/utils";
+import { API_ENABLED } from "@/api/config";
+import { studentsService } from "@/api/services/students.service";
+import { resolveUploadUrl } from "@/lib/uploads";
 
 export function StudentProfile({
   student: s,
   onBack,
   onEdit,
+  onUpdate,
 }: {
   student: Student;
   onBack: () => void;
   onEdit: (s: Student) => void;
+  onUpdate?: (s: Student) => void;
 }) {
+  const [uploading, setUploading] = useState(false);
   const due = s.feesTotal - s.feesPaid;
-  const pct = Math.round((s.feesPaid / s.feesTotal) * 100);
+  const pct = s.feesTotal > 0 ? Math.round((s.feesPaid / s.feesTotal) * 100) : 0;
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Photo must be smaller than 2 MB");
+      return;
+    }
+    if (!API_ENABLED) {
+      toast.info("Photo upload requires API mode");
+      return;
+    }
+    try {
+      setUploading(true);
+      const updated = await studentsService.uploadPhoto(s.id, file);
+      onUpdate?.(updated);
+      toast.success("Photo updated successfully");
+    } catch {
+      toast.error("Failed to upload photo");
+    } finally {
+      setUploading(false);
+      // Reset file input so same file can be selected again
+      e.target.value = "";
+    }
+  };
+
   return (
     <div>
       <button
@@ -37,7 +76,32 @@ export function StudentProfile({
       </button>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="p-6 flex flex-col items-center text-center">
-          <Avatar name={s.name} size="lg" src={s.photo} />
+          {/* Avatar with hover photo-change overlay */}
+          <div className="relative group cursor-pointer">
+            <Avatar
+              name={s.name}
+              size="lg"
+              src={s.photo ? resolveUploadUrl(s.photo) : undefined}
+            />
+            <label
+              className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/50 transition-opacity cursor-pointer ${
+                uploading ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              }`}
+              title="Change photo"
+            >
+              <Camera size={18} className="text-white" />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoChange}
+                disabled={uploading}
+              />
+            </label>
+          </div>
+          {uploading && (
+            <p className="text-xs text-muted-foreground mt-1 animate-pulse">Uploading…</p>
+          )}
           <h2 className="mt-3 text-base font-semibold text-foreground">{s.name}</h2>
           <p className="text-xs font-mono text-muted-foreground mt-0.5 mb-2">{s.id}</p>
           <Badge status={s.status} />
@@ -60,7 +124,25 @@ export function StudentProfile({
               size="sm"
               variant="secondary"
               className="flex-1 justify-center"
-              onClick={() => handleExport(s.name)}
+              onClick={() =>
+                handleExport(`${s.name}`, [
+                  {
+                    "Student ID": s.id,
+                    Name: s.name,
+                    Email: s.email,
+                    Phone: s.phone,
+                    Course: s.course,
+                    Batch: s.batch,
+                    Guardian: s.guardian,
+                    "Guardian Phone": s.guardianPhone,
+                    Address: s.address,
+                    "Admission Date": s.admissionDate,
+                    "Fees Total": s.feesTotal,
+                    "Fees Paid": s.feesPaid,
+                    Status: s.status,
+                  },
+                ])
+              }
             >
               <Download size={12} /> Export
             </Btn>
@@ -83,11 +165,15 @@ export function StudentProfile({
               <p className="text-sm font-semibold text-foreground">{s.batch}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Date of Birth</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                Date of Birth
+              </p>
               <p className="text-sm font-semibold text-foreground">{s.dob}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Admission Date</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                Admission Date
+              </p>
               <p className="text-sm font-semibold text-foreground">{s.admissionDate}</p>
             </div>
           </div>
@@ -125,7 +211,9 @@ export function StudentProfile({
                 <p className={`text-xs mb-1 ${due > 0 ? "text-red-500" : "text-emerald-600"}`}>
                   {due > 0 ? "Due" : "Cleared"}
                 </p>
-                <p className={`text-base font-bold ${due > 0 ? "text-red-700" : "text-emerald-700"}`}>
+                <p
+                  className={`text-base font-bold ${due > 0 ? "text-red-700" : "text-emerald-700"}`}
+                >
                   {FMT.format(due)}
                 </p>
               </div>

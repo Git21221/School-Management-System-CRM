@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Menu,
   GraduationCap,
@@ -8,7 +8,7 @@ import {
   Users,
   LogOut,
 } from "lucide-react";
-import { User } from "@/types";
+import { User, Student } from "@/types";
 import { ROLES, canAccess } from "@/constants/roles";
 import { NAV } from "@/constants/navigation";
 import { AvatarChip } from "@/components/shared";
@@ -17,22 +17,49 @@ interface AppHeaderProps {
   user: User;
   current: string;
   unreadCount: number;
+  students: Student[];
   onNavigate: (id: string) => void;
   onOpenSidebar: () => void;
   onShowProfile: () => void;
   onShowLogout: () => void;
 }
 
+import { useAppStore } from "@/store/useAppStore";
+
 export function AppHeader({
   user,
   current,
   unreadCount,
+  students,
   onNavigate,
   onOpenSidebar,
   onShowProfile,
   onShowLogout,
 }: AppHeaderProps) {
+  const instituteName = useAppStore((s) => s.settings.name);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const runGlobalSearch = () => {
+    const q = searchQuery.trim();
+    if (q.length < 2) return;
+
+    const studentHit = students.find(
+      s =>
+        s.name.toLowerCase().includes(q.toLowerCase()) ||
+        s.id.toLowerCase().includes(q.toLowerCase())
+    );
+    if (studentHit && canAccess(user.role, "students")) {
+      onNavigate(`students?search=${encodeURIComponent(q)}`);
+      return;
+    }
+
+    const moduleHit = NAV.find(
+      n => n.label.toLowerCase().includes(q.toLowerCase()) && canAccess(user.role, n.id)
+    );
+    if (moduleHit) onNavigate(moduleHit.id);
+  };
 
   return (
     <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 md:px-6 shrink-0">
@@ -45,7 +72,7 @@ export function AppHeader({
         </button>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <GraduationCap size={14} className="hidden sm:block" />
-          <span className="hidden sm:block">TechAcademy</span>
+          <span className="hidden sm:block truncate max-w-[140px]">{instituteName || "Institute"}</span>
           <ChevronRight size={12} className="hidden sm:block" />
           <span className="text-foreground font-semibold capitalize">
             {NAV.find((n) => n.id === current)?.label ?? current}
@@ -59,19 +86,14 @@ export function AppHeader({
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
           <input
-            placeholder="Quick search…"
-            className="pl-8 pr-3 py-1.5 text-sm bg-muted/30 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 w-44"
-            onChange={(e) => {
-              const q = e.target.value.trim();
-              if (q.length > 1) {
-                const match = NAV.find(
-                  (n) =>
-                    n.label.toLowerCase().includes(q.toLowerCase()) &&
-                    canAccess(user.role, n.id)
-                );
-                if (match) onNavigate(match.id);
-              }
+            ref={searchRef}
+            placeholder="Search students or modules…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") runGlobalSearch();
             }}
+            className="pl-8 pr-3 py-1.5 text-sm bg-muted/30 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 w-52"
           />
         </div>
         {canAccess(user.role, "notifications") && (

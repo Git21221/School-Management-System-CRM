@@ -12,6 +12,7 @@ import type {
   InstituteSettings,
 } from "@/types";
 
+/** Offline demo seed data — used only when VITE_API_ENABLED=false */
 export const INIT_STUDENTS: Student[] = [
   { id: "STU-001", name: "Arjun Sharma",  phone: "9876543210", email: "arjun@email.com",  course: "Full Stack Web Dev",  batch: "Batch A – Morning",   guardian: "Ramesh Sharma", guardianPhone: "9876543200", address: "123, MG Road, Bangalore",      admissionDate: "2024-01-15", feesTotal: 25000, feesPaid: 20000, status: "Active",    dob: "2000-05-12", grade: "A"  },
   { id: "STU-002", name: "Priya Patel",   phone: "9876543211", email: "priya@email.com",  course: "Digital Marketing",   batch: "Batch B – Evening",   guardian: "Suresh Patel",  guardianPhone: "9876543201", address: "45, Ring Road, Ahmedabad",     admissionDate: "2024-02-01", feesTotal: 18000, feesPaid: 18000, status: "Active",    dob: "2001-03-22", grade: "A+" },
@@ -144,12 +145,16 @@ export const INIT_CERTIFICATES: Certificate[] = [
 ];
 
 export const INIT_EXAM_MARKS: ExamMarkRecord[] = [
-  { studentId: "STU-001", studentName: "Arjun Sharma",  m1: 85, m2: 78, m3: 92, grade: "A"  },
-  { studentId: "STU-006", studentName: "Kavya Reddy",   m1: 90, m2: 88, m3: 94, grade: "A+" },
-  { studentId: "STU-004", studentName: "Sneha Gupta",   m1: 80, m2: 82, m3: 85, grade: "A"  },
-  { studentId: "STU-003", studentName: "Rohit Kumar",   m1: 72, m2: 65, m3: 70, grade: "B"  },
-  { studentId: "STU-008", studentName: "Meera Nair",    m1: 78, m2: 74, m3: 80, grade: "B+" },
-  { studentId: "STU-005", studentName: "Mohammed Ali",  m1: 55, m2: 60, m3: 58, grade: "C"  },
+  { examId: "EXM-001", studentId: "STU-001", studentName: "Arjun Sharma", marks: 85, grade: "A" },
+  { examId: "EXM-002", studentId: "STU-001", studentName: "Arjun Sharma", marks: 78, grade: "A" },
+  { examId: "EXM-008", studentId: "STU-001", studentName: "Arjun Sharma", marks: 92, grade: "A+" },
+  { examId: "EXM-001", studentId: "STU-006", studentName: "Kavya Reddy", marks: 90, grade: "A+" },
+  { examId: "EXM-002", studentId: "STU-006", studentName: "Kavya Reddy", marks: 88, grade: "A" },
+  { examId: "EXM-008", studentId: "STU-006", studentName: "Kavya Reddy", marks: 94, grade: "A+" },
+  { examId: "EXM-006", studentId: "STU-004", studentName: "Sneha Gupta", marks: 80, grade: "A" },
+  { examId: "EXM-005", studentId: "STU-003", studentName: "Rohit Kumar", marks: 72, grade: "B" },
+  { examId: "EXM-004", studentId: "STU-008", studentName: "Meera Nair", marks: 78, grade: "B+" },
+  { examId: "EXM-007", studentId: "STU-005", studentName: "Mohammed Ali", marks: 55, grade: "C" },
 ];
 
 /** Daily attendance sessions — empty until marked; monthly summary uses ATTENDANCE_RECORDS until Phase 3 */
@@ -182,8 +187,6 @@ export const INIT_INSTITUTE_SETTINGS: InstituteSettings = {
 export const EXAM_RESULTS_INIT = INIT_EXAM_MARKS.map((r) => ({
   student: r.studentName,
   id: r.studentId,
-  m1: r.m1,
-  m2: r.m2,
-  m3: r.m3,
+  marks: r.marks,
   grade: r.grade,
 }));

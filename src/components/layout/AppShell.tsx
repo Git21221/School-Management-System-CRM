@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { User } from "@/types";
+import React, { useEffect, useRef, useState } from "react";
+import { User, Student } from "@/types";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 
@@ -7,6 +7,7 @@ interface AppShellProps {
   user: User;
   current: string;
   unreadCount: number;
+  students: Student[];
   onNavigate: (id: string) => void;
   onShowProfile: () => void;
   onShowLogout: () => void;
@@ -17,12 +18,20 @@ export function AppShell({
   user,
   current,
   unreadCount,
+  students,
   onNavigate,
   onShowProfile,
   onShowLogout,
   children,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const container = mainRef.current;
+    if (!container) return;
+    container.scrollTo({ top: 0, behavior: "auto" });
+  }, [current]);
 
   return (
     <div
@@ -58,6 +67,7 @@ export function AppShell({
           user={user}
           current={current}
           unreadCount={unreadCount}
+          students={students}
           onNavigate={onNavigate}
           onOpenSidebar={() => setSidebarOpen(true)}
           onShowProfile={onShowProfile}
@@ -65,7 +75,9 @@ export function AppShell({
         />
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

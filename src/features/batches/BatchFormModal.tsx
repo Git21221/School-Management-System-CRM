@@ -4,6 +4,8 @@ import { Plus } from "lucide-react";
 import { Batch, Course, FacultyMember } from "@/types";
 import { Modal, FormField, Btn, inputCls, selectCls } from "@/components/shared";
 import { TODAY } from "@/lib/utils";
+import { batchFormSchema } from "@/lib/validation/batch";
+import { validateForm } from "@/lib/validation/formErrors";
 
 export interface BatchFormModalProps {
   title: string;
@@ -35,11 +37,12 @@ export function BatchFormModal({
   const up = (k: string) => (v: string) => setF(p => ({ ...p, [k]: v }));
 
   const handleSave = () => {
-    if (!f.name.trim() || !f.course || !f.faculty) {
-      toast.error("Name, Course and Faculty are required");
+    const checked = validateForm(batchFormSchema, f);
+    if (!checked.ok) {
+      toast.error(checked.message);
       return;
     }
-    onSave({ ...f, students: parseInt(f.students) || 0 });
+    onSave(checked.data);
   };
 
   return (

@@ -47,80 +47,80 @@ Everything else depends on a single, consistent data source. **Types align with 
 
 ## Phase 2 — Real actions
 
-- [ ] **2.1** Real CSV export in `handleExport()`
-- [ ] **2.2** Export buttons pass actual row data
-- [ ] **2.3** Settings save → store (not toast-only)
-- [ ] **2.4** Password change validates demo password until API exists
+- [x] **2.1** Real CSV export in `handleExport()`
+- [x] **2.2** Export buttons pass actual row data
+- [x] **2.3** Settings save → store (not toast-only)
+- [x] **2.4** Password change validates demo password until API exists
 
 ## Phase 3 — Attendance
 
-- [ ] **3.1** All students in batch (not `slice(0, 6)`)
-- [ ] **3.2** Present / absent / leave
-- [ ] **3.3** Filter by selected batch
-- [ ] **3.4** Persist per date + batch
-- [ ] **3.5** Monthly report from saved records
-- [ ] **3.6** Dynamic month/year filter
+- [x] **3.1** All students in batch (not `slice(0, 6)`)
+- [x] **3.2** Present / absent / leave
+- [x] **3.3** Filter by selected batch
+- [x] **3.4** Persist per date + batch
+- [x] **3.5** Monthly report from saved records
+- [x] **3.6** Dynamic month/year filter
 
 ## Phase 4 — Exams & certificates
 
-- [ ] **4.1** Persist marks on save
-- [ ] **4.2** Results from saved marks
-- [ ] **4.3** Certificate issue → store
-- [ ] **4.4** Certificate list from store
-- [ ] **4.5** Eligibility check before issue
+- [x] **4.1** Persist marks on save
+- [x] **4.2** Results from saved marks
+- [x] **4.3** Certificate issue → store
+- [x] **4.4** Certificate list from store
+- [x] **4.5** Eligibility check before issue
 
 ## Phase 5 — Derived data & dashboard
 
-- [ ] **5.1** Sync `course.enrolled` on student changes
-- [ ] **5.2** Sync `batch.students` on assignment changes
-- [ ] **5.3** Enrollment chart from real admissions
-- [ ] **5.4** Fee chart from real payments
-- [ ] **5.5** Course pie from live counts
-- [ ] **5.6** Today's classes from batch data
+- [x] **5.1** Sync `course.enrolled` on student changes
+- [x] **5.2** Sync `batch.students` on assignment changes
+- [x] **5.3** Enrollment chart from real admissions
+- [x] **5.4** Fee chart from real payments
+- [x] **5.5** Course pie from live counts
+- [x] **5.6** Today's classes from batch data
 
 ## Phase 6 — CRUD gaps
 
-- [ ] **6.1** Delete course (with guards)
-- [ ] **6.2** Delete batch (with guards)
-- [ ] **6.3** Delete faculty
-- [ ] **6.4** Delete exam
-- [ ] **6.5** Delete notification
+- [x] **6.1** Delete course (with guards)
+- [x] **6.2** Delete batch (with guards)
+- [x] **6.3** Delete faculty
+- [x] **6.4** Delete exam
+- [x] **6.5** Delete notification
 
 ## Phase 7 — Security & roles
 
-- [ ] **7.1** `RoleGuard` component
-- [ ] **7.2** Guard every route in `router.tsx`
-- [ ] **7.3** Block URL bypass for staff/faculty
-- [ ] **7.4** Optional session timeout
+- [x] **7.1** `RoleGuard` component
+- [x] **7.2** Guard every route in `router.tsx`
+- [x] **7.3** Block URL bypass for staff/faculty
+- [x] **7.4** Optional session timeout
 
 ## Phase 8 — UX polish
 
-- [ ] **8.1** Empty states
-- [ ] **8.2** Global student search
-- [ ] **8.3** Zod form validation
-- [ ] **8.4** Loading skeletons
-- [ ] **8.5** Confirm bulk actions
+- [x] **8.1** Empty states
+- [x] **8.2** Global student search
+- [x] **8.3** Zod form validation
+- [x] **8.4** Loading skeletons
+- [x] **8.5** Confirm bulk actions
 
 ## Phase 9 — Fees (complete)
 
-- [ ] **9.1** Installments tab wired
-- [ ] **9.2** Payment history from store
-- [ ] **9.3** Sequential receipt numbers
-- [ ] **9.4** Reminder queue in store (delivery = Part C)
+- [x] **9.1** Installments tab wired
+- [x] **9.2** Payment history from store
+- [x] **9.3** Sequential receipt numbers
+- [x] **9.4** Reminder queue in store (delivery = Part C)
 
 ## Phase 10 — Reports
 
-- [ ] **10.1** Attendance report from store
-- [ ] **10.2** Date range filters
-- [ ] **10.3** Real CSV per report
+- [x] **10.1** Attendance report from store
+- [x] **10.2** Date range filters
+- [x] **10.3** Real CSV per report
 
 ## Phase 11 — Testing
 
-- [ ] **11.1** Add Vitest + RTL
-- [ ] **11.2** Unit tests (utils, roles)
-- [ ] **11.3** Login flow test
-- [ ] **11.4** Student CRUD test
-- [ ] **11.5** `pnpm test` in CI
+- [x] **11.1** Add Vitest + RTL
+- [x] **11.2** Unit tests (utils, roles)
+- [x] **11.3** Login flow test
+- [x] **11.4** Student CRUD test
+- [x] **11.5** `pnpm test` in CI
 
 ---
 
@@ -134,12 +134,12 @@ Prepare front-end to talk to Node backend. **Scaffold already created** — fini
 - [x] **B.4** `docs/API.md` — REST contract
 - [x] **B.5** `docs/DATABASE.md` — SQL schema reference
 - [x] **B.6** `backend/` folder + README structure
-- [ ] **B.7** Add `src/api/services/auth.service.ts` (stub)
-- [ ] **B.8** Add service stubs for all modules (see `src/api/README.md`)
-- [ ] **B.9** `useApiMode()` hook — switch Zustand vs API via `VITE_API_ENABLED`
+- [x] **B.7** Add `src/api/services/auth.service.ts` (stub)
+- [x] **B.8** Add service stubs for all modules (see `src/api/README.md`)
+- [x] **B.9** `useApiMode()` hook — switch Zustand vs API via `VITE_API_ENABLED`
 - [ ] **B.10** Add React Query + provider (when first real endpoint exists)
 
-> **Tip:** Build Part A Phases 1–7 first, then B.7–B.10 in parallel with Part C.
+> **Tip:** API mode is enabled via `.env.local` (`VITE_API_ENABLED=true`). Run `pnpm dev:all` for front-end + backend together.
 
 ---
 
@@ -194,14 +194,14 @@ You implement this in `backend/`. Follow `backend/README.md`, `docs/API.md`, and
 
 Replace Zustand persist **module by module** (don't big-bang):
 
-- [ ] **C6.1** Auth — login via API, store JWT
-- [ ] **C6.2** Students → `students.service.ts` + React Query
-- [ ] **C6.3** Courses & batches
-- [ ] **C6.4** Attendance & fees
-- [ ] **C6.5** Faculty, exams, certificates
-- [ ] **C6.6** Reports, notifications, settings, dashboard
+- [x] **C6.1** Auth — login via API, store JWT + refresh cookie session
+- [x] **C6.2** Students → `students.service.ts` + API sync on load
+- [x] **C6.3** Courses & batches
+- [x] **C6.4** Attendance & fees
+- [x] **C6.5** Faculty, exams, certificates
+- [x] **C6.6** Reports, notifications, settings, dashboard
 - [ ] **C6.7** Remove demo `DEMO_USERS` from client bundle
-- [ ] **C6.8** Set `VITE_API_ENABLED=true` by default
+- [x] **C6.8** Set `VITE_API_ENABLED=true` by default (`.env.example`)
 
 ## Phase C7 — Production
 
@@ -229,10 +229,10 @@ Part B (B.7–B.10)      →  Part C6 cutover module by module
 
 | Section | Tasks | Done |
 |---------|-------|------|
-| A — Front-end | 52 | 7/52 |
-| B — API layer prep | 10 | 6/10 |
-| C — Node + SQL backend | 38 | 0/38 |
-| **Total** | **100** | **13/100** |
+| A — Front-end | 52 | 52/52 |
+| B — API layer prep | 10 | 9/10 |
+| C — Node + SQL backend | 38 | 30/38 |
+| **Total** | **100** | **91/100** |
 
 ---
 

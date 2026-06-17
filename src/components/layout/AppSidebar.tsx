@@ -3,6 +3,8 @@ import { User } from "@/types";
 import { ROLES, canAccess } from "@/constants/roles";
 import { NAV } from "@/constants/navigation";
 import { AvatarChip } from "@/components/shared";
+import { useAppStore } from "@/store/useAppStore";
+import { resolveUploadUrl } from "@/lib/uploads";
 
 interface AppSidebarProps {
   active: string;
@@ -21,6 +23,8 @@ export function AppSidebar({
   onLogout,
   user,
 }: AppSidebarProps) {
+  const instituteName = useAppStore((s) => s.settings.name);
+  const logoUrl = resolveUploadUrl(useAppStore((s) => s.settings.logoUrl));
   const items = NAV.filter((n) => canAccess(user.role, n.id));
   return (
     <aside
@@ -33,14 +37,18 @@ export function AppSidebar({
       >
         <div className="flex items-center gap-2.5">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "var(--sidebar-primary)" }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden"
+            style={{ background: logoUrl ? "transparent" : "var(--sidebar-primary)" }}
           >
-            <GraduationCap size={16} className="text-white" />
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <GraduationCap size={16} className="text-white" />
+            )}
           </div>
-          <div>
-            <div className="text-sm font-semibold text-white leading-tight">
-              TechAcademy
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-white leading-tight truncate">
+              {instituteName}
             </div>
             <div
               className="text-xs"

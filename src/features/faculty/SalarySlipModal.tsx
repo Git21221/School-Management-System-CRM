@@ -2,6 +2,7 @@ import { Printer } from "lucide-react";
 import { FacultyMember } from "@/types";
 import { Modal, Btn } from "@/components/shared";
 import { FMT, handlePrint } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 export interface SalarySlipModalProps {
   member: FacultyMember;
@@ -9,12 +10,13 @@ export interface SalarySlipModalProps {
 }
 
 export function SalarySlipModal({ member: f, onClose }: SalarySlipModalProps) {
+  const instituteName = useAppStore((s) => s.settings.name);
   const month = new Date().toLocaleString("default", { month: "long", year: "numeric" });
   return (
     <Modal title="Salary Slip" onClose={onClose}>
       <div className="border border-border rounded-xl p-6 bg-muted/10">
         <div className="text-center mb-4 pb-4 border-b border-border">
-          <h2 className="text-base font-bold text-foreground">TechAcademy</h2>
+          <h2 className="text-base font-bold text-foreground">{instituteName || "Institute"}</h2>
           <p className="text-xs text-muted-foreground">Salary Slip – {month}</p>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs mb-4">

@@ -1,4 +1,5 @@
-import { useState, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Plus, Search, X, Download, Eye, Edit2, Trash2 } from "lucide-react";
 import { Student, Course, Batch } from "@/types";
@@ -13,6 +14,9 @@ import {
 import { genId, handleExport, FMT } from "@/lib/utils";
 import { StudentProfile } from "./StudentProfile";
 import { StudentFormModal } from "./StudentFormModal";
+import { API_ENABLED } from "@/api/config";
+import { studentsService } from "@/api/services/students.service";
+import { ApiError } from "@/api/client";
 
 const PAGE_SIZE = 7;
 
@@ -27,6 +31,7 @@ export function StudentsPage({
   courses: Course[];
   batches: Batch[];
 }) {
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All Courses");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -35,6 +40,25 @@ export function StudentsPage({
   const [editTarget, setEditTarget] = useState<Student | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
   const [selected, setSelected] = useState<Student | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
+  useEffect(() => {
+    const q = searchParams.get("search");
+    if (q) {
+      setSearch(q);
+      setPage(1);
+    }
+  }, [searchParams]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   if (selected) {
     return (
@@ -44,6 +68,10 @@ export function StudentsPage({
         onEdit={s => {
           setSelected(null);
           setEditTarget(s);
+        }}
+        onUpdate={updated => {
+          setSelected(updated);
+          setStudents(prev => prev.map(s => (s.id === updated.id ? updated : s)));
         }}
       />
     );
@@ -65,25 +93,73 @@ export function StudentsPage({
   const safePage = Math.min(page, totalPages);
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  const handleAdd = (data: Omit<Student, "id">) => {
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paginated.length && paginated.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginated.map(s => s.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = [...selectedIds];
+    try {
+      if (API_ENABLED) {
+        await Promise.all(ids.map(id => studentsService.remove(id)));
+      }
+      setStudents(prev => prev.filter(s => !selectedIds.has(s.id)));
+      toast.success(`${ids.length} student(s) removed`);
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Bulk delete failed");
+    }
+  };
+
+  const handleAdd = async (data: Omit<Student, "id">) => {
     const id = genId("STU", students);
-    setStudents(prev => [{ id, ...data }, ...prev]);
-    toast.success(`${data.name} enrolled successfully!`, { description: `Student ID: ${id}` });
-    setShowAdd(false);
+    try {
+      if (API_ENABLED) {
+        const student = await studentsService.create(data, courses, batches, id);
+        setStudents(prev => [student, ...prev]);
+      } else {
+        setStudents(prev => [{ id, ...data }, ...prev]);
+      }
+      toast.success(`${data.name} enrolled successfully!`, { description: `Student ID: ${id}` });
+      setShowAdd(false);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to create student");
+    }
   };
 
-  const handleEdit = (data: Omit<Student, "id">) => {
+  const handleEdit = async (data: Omit<Student, "id">) => {
     if (!editTarget) return;
-    setStudents(prev => prev.map(s => (s.id === editTarget.id ? { ...s, ...data } : s)));
-    toast.success("Student record updated successfully.");
-    setEditTarget(null);
+    try {
+      if (API_ENABLED) {
+        const student = await studentsService.update(editTarget.id, data, courses, batches);
+        setStudents(prev => prev.map(s => (s.id === editTarget.id ? student : s)));
+      } else {
+        setStudents(prev => prev.map(s => (s.id === editTarget.id ? { ...s, ...data } : s)));
+      }
+      toast.success("Student record updated successfully.");
+      setEditTarget(null);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to update student");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    setStudents(prev => prev.filter(s => s.id !== deleteTarget.id));
-    toast.success(`${deleteTarget.name} has been removed.`);
-    setDeleteTarget(null);
+    try {
+      if (API_ENABLED) {
+        await studentsService.remove(deleteTarget.id);
+      }
+      setStudents(prev => prev.filter(s => s.id !== deleteTarget.id));
+      toast.success(`${deleteTarget.name} has been removed.`);
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to delete student");
+    }
   };
 
   return (
@@ -151,14 +227,47 @@ export function StudentsPage({
               <X size={12} /> Clear
             </Btn>
           )}
-          <Btn variant="secondary" size="sm" onClick={() => handleExport("Students")}>
+          <Btn variant="secondary" size="sm" onClick={() =>
+              handleExport(
+                "Students",
+                filtered.map(s => ({
+                  "Student ID": s.id,
+                  Name: s.name,
+                  Course: s.course,
+                  Batch: s.batch,
+                  Phone: s.phone,
+                  "Admission Date": s.admissionDate,
+                  "Fees Paid": s.feesPaid,
+                  "Fees Due": s.feesTotal - s.feesPaid,
+                  Status: s.status,
+                }))
+              )
+            }>
             <Download size={13} /> Export
           </Btn>
         </div>
+        {selectedIds.size > 0 && (
+          <div className="px-4 py-2 border-b border-border bg-muted/20 flex items-center justify-between">
+            <span className="text-xs font-semibold text-foreground">
+              {selectedIds.size} selected
+            </span>
+            <Btn size="sm" variant="danger" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 size={12} /> Delete selected
+            </Btn>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted/20 border-b border-border">
               <tr>
+                <th className="px-4 py-3 w-8">
+                  <input
+                    type="checkbox"
+                    checked={paginated.length > 0 && selectedIds.size === paginated.length}
+                    onChange={toggleSelectAll}
+                    className="rounded border-border"
+                  />
+                </th>
                 {["Student ID", "Name", "Course", "Batch", "Admission", "Paid", "Due", "Status", ""].map(h => (
                   <th
                     key={h}
@@ -177,6 +286,14 @@ export function StudentsPage({
                     i % 2 !== 0 ? "bg-muted/5" : ""
                   }`}
                 >
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(s.id)}
+                      onChange={() => toggleSelect(s.id)}
+                      className="rounded border-border"
+                    />
+                  </td>
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{s.id}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
@@ -226,7 +343,7 @@ export function StudentsPage({
               ))}
               {paginated.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  <td colSpan={10} className="px-4 py-10 text-center text-sm text-muted-foreground">
                     No students match the current filters.
                   </td>
                 </tr>
@@ -296,6 +413,15 @@ export function StudentsPage({
           confirmLabel="Delete"
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+      {bulkDeleteOpen && (
+        <ConfirmDialog
+          title="Delete Selected Students"
+          message={`Remove ${selectedIds.size} student record(s)? This cannot be undone.`}
+          confirmLabel="Delete all"
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkDeleteOpen(false)}
         />
       )}
     </div>

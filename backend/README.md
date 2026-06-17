@@ -1,6 +1,6 @@
 # Backend — Node.js + TypeScript + MySQL (Express)
 
-> **Status:** Reserved for the production API. The front-end runs standalone (Zustand persist) until this backend is wired in. See [Front-end Integration](#front-end-integration) for the swap plan.
+> **Status:** Functional Express API with MySQL. Auth, CRUD modules, audit logging, and rate limiting are implemented. The front-end still runs standalone (Zustand persist) until wired to this API — see [Front-end Integration](#front-end-integration).
 
 ---
 
@@ -29,14 +29,14 @@
 | Framework | Express | Simple, lightweight, standard industry choice |
 | Language | TypeScript 5+ | Strict type checking (`strict: true`), clean typing |
 | Database | MySQL 8.0+ | ACID-compliant relational DB (Free tier available on Clever Cloud, Aiven, or local) |
-| ORM / Queries | Prisma **or** Drizzle **or** `mysql2` | Parameterized queries enforced to block SQL injection |
+| ORM / Queries | `mysql2` (parameterized) | Raw SQL migrations in `sql/`; typed row helpers in `src/shared/db/` |
 | Auth | Short-lived JWT (15 min) + Refresh Token (7 d, HttpOnly cookie) | Secure session rotation strategy |
 | Password Hashing | bcrypt | Cost factor **12** minimum |
 | Validation | Zod | Matches front-end schemas; strips unknown fields on request payload |
 | Security Headers | `helmet` | Sets standard headers (CSP, HSTS, X-Frame-Options, etc.) |
 | Rate Limiting | `express-rate-limit` | Tiered per-IP and per-user limits (Free, local implementation) |
 | File Uploads | `multer` + MIME validation | Strict file size and extension checks; stores outside webroot |
-| Logging | `winston` or `pino` | Console/file logs (Free self-hosted, no paid log aggregator required) |
+| Logging | `winston` | Structured console logs; JSON in production, colorized text in development (`LOG_LEVEL` env) |
 | Secrets | Environment variables | Loaded via `dotenv` in development; server host env variables in production (Free) |
 
 ---
@@ -55,14 +55,12 @@ backend/
 ├── README.md                     # Backend developer guide
 ├── SECURITY.md                   # Threat model & security instructions
 │
-├── prisma/                       # Database ORM settings (if using Prisma)
-│   ├── schema.prisma
-│   └── migrations/
-│
-├── sql/                          # Database Raw SQL migrations (if not using ORM)
+├── sql/                          # Raw SQL migrations (run manually in MySQL)
+│   ├── 000_create_database.sql
 │   ├── 001_init.sql
-│   ├── 002_audit_log.sql
 │   └── seed.sql
+│
+├── vitest.config.ts              # Test runner configuration
 │
 └── src/
     ├── server.ts                 # App entry point (PORT binding & graceful shutdown)
@@ -70,7 +68,8 @@ backend/
     │
     ├── config/                   # Global configuration & loaders
     │   ├── env.ts                # Environment validation (Zod)
-    │   └── database.ts           # MySQL connection pool initialization
+    │   ├── database.ts           # MySQL connection pool initialization
+    │   └── logger.ts             # Winston logger (respects LOG_LEVEL)
     │
     ├── middleware/               # App-wide global middleware
     │   ├── auth.middleware.ts    # JWT parsing & route authentication
@@ -79,40 +78,32 @@ backend/
     │
     ├── modules/                  # Feature Modules (Vertical Slices)
     │   ├── auth/                 # Authentication & Session Module
-    │   │   ├── auth.controller.ts
-    │   │   ├── auth.service.ts
-    │   │   ├── auth.routes.ts
-    │   │   └── auth.schema.ts
-    │   │
-    │   ├── students/             # Student Profiles & Enrolment Module
-    │   │   ├── students.controller.ts
-    │   │   ├── students.service.ts
-    │   │   ├── students.repository.ts
-    │   │   ├── students.routes.ts
-    │   │   └── students.schema.ts
-    │   │
-    │   ├── courses/              # Curriculum & Course Catalogue Module
-    │   │   ├── courses.controller.ts
-    │   │   ├── courses.service.ts
-    │   │   ├── courses.repository.ts
-    │   │   └── courses.routes.ts
-    │   │
-    │   ├── fees/                 # Finance, Payments, and Invoicing Module
-    │   │   ├── fees.controller.ts
-    │   │   ├── fees.service.ts
-    │   │   ├── fees.repository.ts
-    │   │   └── fees.routes.ts
-    │   │
-    │   └── [other-modules]/      # batches, exams, notifications, attendance, etc.
+    │   ├── students/             # Student Profiles & Enrolment
+    │   ├── courses/              # Curriculum & Course Catalogue
+    │   ├── fees/                 # Finance, Payments, and Invoicing
+    │   ├── batches/              # Batch scheduling
+    │   ├── faculty/              # Faculty management
+    │   ├── attendance/           # Attendance tracking
+    │   ├── exams/                # Exams & marks
+    │   ├── certificates/         # Certificate issuance
+    │   ├── notifications/        # In-app notifications
+    │   ├── dashboard/            # Reports & exports
+    │   ├── settings/             # Institute settings
+    │   └── audit/                # Audit log writer
+    │
+    ├── __tests__/                # Vitest integration/unit tests
     │
     └── shared/                   # Generic helpers, interfaces & types shared across modules
-        ├── errors/               # Custom AppError classes
+        ├── db/
+        │   └── query.ts          # Typed mysql2 query helpers
+        ├── errors/
         │   └── app-error.ts
-        ├── utils/                # Standard utility functions
+        ├── utils/
         │   ├── crypto.ts         # JWT & hashing utilities
-        │   └── mailer.ts         # Transactional email helpers (NodeMailer)
-        └── types/                # Common TypeScript type definitions
-            └── express.d.ts      # Custom extensions to Express Request namespaces
+        │   └── jwt-errors.ts     # JWT error classification
+        └── types/
+            ├── db.ts             # MySQL row interfaces
+            └── express.d.ts      # Express Request extensions
 ```
 
 ---
@@ -173,8 +164,7 @@ Internet
    • express-rate-limit (Auth endpoints capped at 5 req / 15 min)
    • Zod validation → reject unknown body arguments
    • JWT Access Verification (15m expiration)
-   • RBAC Guard Middleware
-   • XSS Input Sanitization
+   • Role guard middleware (`requireRoles`)
    │
    ▼
 [MySQL Database]
@@ -251,34 +241,35 @@ POST /api/auth/logout
   → Reset refresh token cookie (Max-Age=0)
 ```
 
-### Password Reset
+### Password Reset *(planned — not yet implemented)*
 
 ```
-POST /api/auth/forgot-password   → Send 15-minute token link via nodemailer (free Brevo/Gmail SMTP)
-POST /api/auth/reset-password    → Verify token, hash new password, delete user's active refresh tokens
+POST /api/auth/forgot-password   → Send reset link via SMTP (env vars reserved)
+POST /api/auth/reset-password    → Verify token, hash new password, revoke refresh tokens
 ```
 
 ---
 
 ## RBAC — Role & Permission Matrix
 
-| Permission | Super Admin | Admin | Faculty | Student |
-|---|:---:|:---:|:---:|:---:|
-| Manage admins & roles | ✅ | ❌ | ❌ | ❌ |
-| Manage faculty | ✅ | ✅ | ❌ | ❌ |
-| Manage students | ✅ | ✅ | ❌ | ❌ |
-| View all students | ✅ | ✅ | ✅ (own batch) | ❌ |
-| Manage courses & batches | ✅ | ✅ | ❌ | ❌ |
-| Mark attendance | ✅ | ✅ | ✅ (own batch) | ❌ |
-| View own attendance | ✅ | ✅ | ✅ | ✅ |
-| Manage fees | ✅ | ✅ | ❌ | ❌ |
-| View own fees | ✅ | ✅ | ❌ | ✅ |
-| Manage exams | ✅ | ✅ | ✅ (own batch) | ❌ |
-| View own grades | ✅ | ✅ | ✅ | ✅ |
-| Issue certificates | ✅ | ✅ | ❌ | ❌ |
-| View reports | ✅ | ✅ | ❌ | ❌ |
-| Manage settings | ✅ | ❌ | ❌ | ❌ |
-| View audit log | ✅ | ❌ | ❌ | ❌ |
+**Implemented roles:** `admin`, `staff`, `faculty` (see `users.role` enum in `sql/001_init.sql`).
+
+Routes use `requireAuth` and `requireRoles(...)` middleware. Fine-grained per-route guards vary by module — see each `*.routes.ts` file.
+
+| Permission | Admin | Staff | Faculty |
+|---|:---:|:---:|:---:|
+| Manage faculty | ✅ | ✅ | ❌ |
+| Manage students | ✅ | ✅ | ❌ |
+| View students | ✅ | ✅ | ✅ (own batch routes) |
+| Manage courses & batches | ✅ | ✅ | ❌ |
+| Mark attendance | ✅ | ✅ | ✅ |
+| Manage fees | ✅ | ✅ | ❌ |
+| Manage exams | ✅ | ✅ | ✅ (own batch) |
+| Issue certificates | ✅ | ✅ | ❌ |
+| View reports / dashboard | ✅ | ✅ | ❌ |
+| Manage settings | ✅ | ❌ | ❌ |
+
+> **Note:** Student portal roles and a dedicated audit-log viewer API are documented in the product roadmap but not yet implemented in this backend.
 
 ---
 
@@ -331,7 +322,8 @@ CREATE TABLE login_attempts (
 
 ## API Contract
 
-REST endpoints per module → [`../docs/API.md`](../docs/API.md)
+REST endpoints → [`../docs/API_REFERENCE.md`](../docs/API_REFERENCE.md) (full list + Postman)  
+Postman collection → [`postman/School-CRM-API.postman_collection.json`](postman/School-CRM-API.postman_collection.json)
 
 ### Standard response envelope
 
@@ -377,15 +369,17 @@ Once the Express API is ready, switch the frontend state client to fetch calls:
 
 ## Quick Start
 
+**MySQL Workbench users:** see [`MYSQL_WORKBENCH.md`](MYSQL_WORKBENCH.md) — run `sql/000_create_database.sql`, `001_init.sql`, then optional `seed.sql`.
+
 ```bash
 cd backend
 cp .env.example .env
-# Edit credentials in .env (Generate secrets using `openssl rand -hex 64`)
+# Edit credentials in .env (generate secrets: openssl rand -hex 64)
 
-pnpm install
-pnpm run db:migrate        # runs Prisma/SQL migrations
-pnpm run db:seed           # applies seeding data
-pnpm run dev               # starts Express server on http://localhost:5000
+npm install
+# One-time setup — prompts for institute name, admin password, MySQL root password
+npm run db:setup
+npm run dev               # starts Express on http://localhost:5000
 ```
 
 From root project directory:
@@ -401,16 +395,32 @@ pnpm dev:api      # backend :5000
 
 | Script | Description |
 |---|---|
-| `pnpm dev` | Starts app locally with `nodemon` or `tsx watch` |
-| `pnpm build` | Compiles TypeScript modules into `dist/` |
-| `pnpm start` | Executes production files: `node dist/index.js` |
-| `pnpm db:migrate` | Runs database migrations |
-| `pnpm db:migrate:reset` | **⚠ Destructive** — recreates the database schemas |
-| `pnpm db:seed` | Populates demo data |
-| `pnpm test` | Launches local tests |
-| `pnpm lint` | Performs ESLint analysis |
-| `pnpm typecheck` | Validates types without code emission (`tsc --noEmit`) |
-| `pnpm audit` | Runs `npm audit --audit-level=high` (checks vulnerabilities) |
+| `npm run dev` | Starts app locally with `tsx watch` |
+| `npm run build` | Compiles TypeScript into `dist/` |
+| `npm start` | Runs production build: `node dist/server.js` |
+| `npm test` | Runs Vitest test suite once |
+| `npm run db:setup` | Interactive setup: institute name, your admin password, database, schema, optional sample data |
+| `npm run db:reset-admin` | Apply a new `ADMIN_PASSWORD` from `.env` |
+| `npm run lint` | ESLint analysis |
+| `npm run typecheck` | Type-check without emit (`tsc --noEmit`) |
+
+### Database setup
+
+SQL migrations are applied manually (no ORM migration runner yet):
+
+1. `sql/000_create_database.sql` — create database
+2. `sql/001_init.sql` — core schema
+3. `sql/seed.sql` — optional demo data
+
+See [`MYSQL_WORKBENCH.md`](MYSQL_WORKBENCH.md) for step-by-step instructions.
+
+### Testing
+
+```bash
+npm test
+```
+
+Tests live in `src/__tests__/`. They cover auth refresh error handling, the error middleware, and basic route responses. Vitest mocks the database pool so tests do not require a running MySQL instance.
 
 ---
 

@@ -9,12 +9,16 @@ import {
   Users,
   ClipboardCheck,
   Edit2,
+  Trash2,
 } from "lucide-react";
 import { Batch, Course, FacultyMember, Student } from "@/types";
-import { SectionHeader, Btn, Card, StatusBadge as Badge } from "@/components/shared";
+import { SectionHeader, Btn, Card, StatusBadge as Badge, ConfirmDialog, EmptyState } from "@/components/shared";
 import { genId } from "@/lib/utils";
 import { BatchFormModal } from "./BatchFormModal";
 import { BatchStudentsModal } from "./BatchStudentsModal";
+import { API_ENABLED } from "@/api/config";
+import { batchesService } from "@/api/services/batches.service";
+import { ApiError } from "@/api/client";
 
 export interface BatchesPageProps {
   batches: Batch[];
@@ -36,19 +40,60 @@ export function BatchesPage({
   const [showAdd, setShowAdd] = useState(false);
   const [editTarget, setEditTarget] = useState<Batch | null>(null);
   const [studentsTarget, setStudentsTarget] = useState<Batch | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Batch | null>(null);
 
-  const handleAdd = (data: Omit<Batch, "id">) => {
-    const id = genId("BAT", batches);
-    setBatches(prev => [{ id, ...data }, ...prev]);
-    toast.success(`Batch "${data.name}" created!`);
-    setShowAdd(false);
+  const batchStudentCount = (b: Batch) => students.filter(s => s.batch === b.name).length;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const count = batchStudentCount(deleteTarget);
+    if (count > 0) {
+      toast.error(`Cannot delete — ${count} student(s) enrolled in this batch`);
+      setDeleteTarget(null);
+      return;
+    }
+    try {
+      if (API_ENABLED) await batchesService.remove(deleteTarget.id);
+      setBatches(prev => prev.filter(b => b.id !== deleteTarget.id));
+      toast.success(`Batch "${deleteTarget.name}" deleted`);
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to delete batch");
+    }
   };
 
-  const handleEdit = (data: Omit<Batch, "id">) => {
+  const handleAdd = async (data: Omit<Batch, "id">) => {
+    const id = genId("BAT", batches);
+    try {
+      if (API_ENABLED) {
+        const batch = await batchesService.create(data, courses, faculty, id);
+        setBatches(prev => [{ ...batch, students: 0 }, ...prev]);
+      } else {
+        setBatches(prev => [{ id, ...data }, ...prev]);
+      }
+      toast.success(`Batch "${data.name}" created!`);
+      setShowAdd(false);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to create batch");
+    }
+  };
+
+  const handleEdit = async (data: Omit<Batch, "id">) => {
     if (!editTarget) return;
-    setBatches(prev => prev.map(b => (b.id === editTarget.id ? { ...b, ...data } : b)));
-    toast.success("Batch updated successfully.");
-    setEditTarget(null);
+    try {
+      if (API_ENABLED) {
+        const batch = await batchesService.update(editTarget.id, data, courses, faculty);
+        setBatches(prev =>
+          prev.map(b => (b.id === editTarget.id ? { ...b, ...batch } : b))
+        );
+      } else {
+        setBatches(prev => prev.map(b => (b.id === editTarget.id ? { ...b, ...data } : b)));
+      }
+      toast.success("Batch updated successfully.");
+      setEditTarget(null);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to update batch");
+    }
   };
 
   return (
@@ -63,7 +108,17 @@ export function BatchesPage({
         }
       />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {batches.map(b => (
+        {batches.length === 0 ? (
+          <Card className="col-span-full">
+            <EmptyState
+              icon={Users2}
+              title="No batches yet"
+              description="Create a batch to assign students and mark attendance."
+              action={<Btn onClick={() => setShowAdd(true)}><Plus size={14} /> Create Batch</Btn>}
+            />
+          </Card>
+        ) : (
+        batches.map(b => (
           <Card key={b.id} className="p-5">
             <div className="flex items-start justify-between mb-3">
               <div>
@@ -106,9 +161,12 @@ export function BatchesPage({
               <Btn variant="secondary" size="sm" onClick={() => setEditTarget(b)}>
                 <Edit2 size={12} />
               </Btn>
+              <Btn variant="secondary" size="sm" onClick={() => setDeleteTarget(b)}>
+                <Trash2 size={12} />
+              </Btn>
             </div>
           </Card>
-        ))}
+        )))}
       </div>
 
       {showAdd && (
@@ -135,6 +193,19 @@ export function BatchesPage({
           batch={studentsTarget}
           students={students}
           onClose={() => setStudentsTarget(null)}
+        />
+      )}
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete Batch"
+          message={`Delete "${deleteTarget.name}"? ${
+            batchStudentCount(deleteTarget) > 0
+              ? "Reassign or remove enrolled students first."
+              : "This cannot be undone."
+          }`}
+          confirmLabel="Delete"
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </div>

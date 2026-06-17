@@ -2,7 +2,7 @@
 
 A modern, full-featured **Institute Management System** for educational institutes. Manage student admissions, courses, batches, attendance, fees, exams, certificates, faculty, reports, and notifications — all from a single, role-aware dashboard.
 
-Built for **TechAcademy** as a production-grade front-end application with demo data, persistent local state, and a polished UI.
+Built for **TechAcademy** as a production-grade institute CRM with a polished React dashboard. The **front-end runs standalone** today (Zustand + localStorage demo mode). A **Node.js + MySQL API** lives in [`backend/`](backend/README.md) and is ready for integration — see [Data & persistence](#data--persistence).
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
@@ -46,7 +46,7 @@ This CRM covers end-to-end institute administration:
 | **Notifications** | Fee reminders, admission confirmations, course completion alerts |
 | **Settings** | Institute branding, receipt format, certificate format, role overview |
 
-> **Note:** This is currently a **front-end application** with seeded demo data stored in the browser via Zustand persist. There is no backend API yet — ideal for demos, prototyping, and UI/UX validation.
+> **Note:** With `VITE_API_ENABLED=true` (see `.env.local`), the React app uses the **MySQL backend** for auth and data. Run **`pnpm dev:all`** to start front-end and API together. Demo mode (offline) remains available when API is disabled.
 
 ---
 
@@ -231,6 +231,8 @@ Configure institute details, logo, receipt format, certificate layout, and role 
 
 Navigation is filtered automatically based on the signed-in user's role. Unauthorized routes redirect to the dashboard.
 
+**Backend alignment:** The API uses the same three roles (`admin`, `staff`, `faculty`). API route guards are stricter in places — e.g. faculty management and certificate issuance are **admin-only** on the server, while staff can list students/courses/batches and manage fees. When the front-end is wired to the API, nav and server permissions will need to stay in sync. See [`backend/README.md`](backend/README.md#rbac--role--permission-matrix).
+
 ---
 
 ## Tech Stack
@@ -250,7 +252,7 @@ Navigation is filtered automatically based on the signed-in user's role. Unautho
 | **Animations** | Motion |
 | **Toasts** | Sonner |
 | **Dates** | date-fns |
-| **Package Manager** | pnpm |
+| **Package Manager** | pnpm (monorepo: front-end + `backend/`) |
 
 ---
 
@@ -259,7 +261,10 @@ Navigation is filtered automatically based on the signed-in user's role. Unautho
 ```
 school-management-crm/
 ├── .github/workflows/     # CI pipeline (lint, typecheck, build)
+├── backend/               # Node.js + Express + MySQL API (see backend/README.md)
 ├── docs/
+│   ├── API.md             # REST contract (shared with backend)
+│   ├── DATABASE.md        # SQL schema reference
 │   └── screenshots/       # README screenshots (auto-generated)
 ├── guidelines/            # Product spec & design guidelines
 │   ├── Guidelines.md
@@ -268,6 +273,7 @@ school-management-crm/
 ├── scripts/
 │   └── capture-screenshots.mjs
 ├── src/
+│   ├── api/               # HTTP client scaffold (VITE_API_ENABLED=false by default)
 │   ├── app/               # App shell, router, shadcn/ui primitives
 │   ├── components/
 │   │   ├── layout/        # AppShell, Sidebar, Header, ErrorBoundary
@@ -293,8 +299,9 @@ school-management-crm/
 │   └── types/             # Shared TypeScript types
 ├── index.html
 ├── package.json
+├── pnpm-workspace.yaml    # Monorepo: "." + "backend"
 ├── tsconfig.json
-├── vite.config.ts
+├── vite.config.ts         # Dev proxy: /api → localhost:5000
 └── README.md
 ```
 
@@ -327,6 +334,19 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser. Vite will pick the next available port if 3000 is in use.
+
+### Backend API (optional)
+
+The Express API runs separately on port **5000**. It is **not required** for the demo UI.
+
+```bash
+# From repo root — starts backend with tsx watch
+pnpm dev:api
+```
+
+Set up MySQL and `backend/.env` first — see [backend/README.md](backend/README.md). Vite proxies `/api` to `http://localhost:5000` during front-end dev.
+
+To switch the React app to the API later, set `VITE_API_ENABLED=true` and `VITE_API_URL` in `.env.local` (see [`src/api/README.md`](src/api/README.md)).
 
 ### Production Build
 
@@ -362,7 +382,9 @@ Authentication is **client-side only** for demonstration purposes. Do not use th
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start Vite dev server with HMR |
+| `pnpm dev` | Start Vite dev server with HMR (front-end) |
+| `pnpm dev:api` | Start Express backend on port 5000 |
+| `pnpm dev:all` | Start front-end + backend together |
 | `pnpm build` | Type-check and build for production |
 | `pnpm preview` | Serve the production build locally |
 | `pnpm lint` | Run ESLint across the project |
@@ -375,10 +397,21 @@ Authentication is **client-side only** for demonstration purposes. Do not use th
 
 ## Data & Persistence
 
-- **Initial data** is seeded from `src/constants/data.ts` (students, courses, batches, faculty, exams, payments, notifications).
-- **Runtime changes** (add/edit/delete) are stored in **Zustand** and persisted to **localStorage** via the `persist` middleware.
-- Clearing browser storage resets the app to default demo data.
-- **No backend** — all CRUD operations happen in-memory on the client.
+### API mode (recommended)
+
+```bash
+# Terminal 1 + 2 in one command:
+pnpm dev:all
+```
+
+1. Ensure MySQL is running and `backend/.env` is configured (`pnpm --filter school-management-crm-backend db:setup` once).
+2. Copy `.env.example` → `.env.local` (API enabled by default).
+3. Sign in with your **backend admin** account (`ADMIN_EMAIL` / `ADMIN_PASSWORD` in `backend/.env`).
+
+| Mode | Data source | Auth |
+|------|-------------|------|
+| API (default in `.env.example`) | MySQL via `backend/` | JWT + HttpOnly refresh cookie |
+| Demo (`VITE_API_ENABLED=false`) | Zustand + localStorage | Client-side demo passwords |
 
 ---
 
@@ -439,18 +472,18 @@ The full product specification is available in:
 ## Roadmap & Limitations
 
 ### Current limitations
-- No real backend API or database
-- Demo authentication (no JWT, OAuth, or session server)
-- Data is per-browser (localStorage), not shared across devices
-- Print/export features are client-side simulations
+- Production deployment (Docker, HTTPS, CI migrations) not configured yet — see Part C7 in `ROADMAP.md`
+- Email/SMS delivery for fee reminders is queued locally; backend SMTP is optional
+- Demo login shortcuts remain for offline mode (`VITE_API_ENABLED=false`)
+- React Query cache layer not added yet (optional B.10)
 
 ### Planned enhancements
-- REST or GraphQL API integration
-- Real authentication & authorization server
-- Database persistence (PostgreSQL / MongoDB)
+- Remove `DEMO_USERS` from production builds
 - Email/SMS notification delivery
 - Multi-institute (tenant) support
 - Mobile-responsive enhancements & PWA
+
+See [`ROADMAP.md`](ROADMAP.md) for the full task list.
 
 ---
 

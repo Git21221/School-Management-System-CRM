@@ -1,6 +1,7 @@
 # API Contract — Node + SQL Backend
 
-> **Status:** Specification for backend implementation. Front-end will call these endpoints via `src/api/`.
+> **Implemented.** Full list with Postman collection → [`API_REFERENCE.md`](./API_REFERENCE.md)  
+> **Postman import:** [`backend/postman/`](../backend/postman/)
 
 **Base URL:** `http://localhost:5000/api`  
 **Auth:** `Authorization: Bearer <jwt>` on protected routes  

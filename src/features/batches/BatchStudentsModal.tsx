@@ -61,7 +61,18 @@ export function BatchStudentsModal({
         </div>
       )}
       <div className="flex justify-end gap-2 mt-5 pt-5 border-t border-border">
-        <Btn variant="secondary" onClick={() => handleExport(`${batch.name} Students`)}>
+        <Btn variant="secondary" onClick={() =>
+            handleExport(
+              `${batch.name} Students`,
+              list.map(s => ({
+                "Student ID": s.id,
+                Name: s.name,
+                Phone: s.phone,
+                Course: s.course,
+                Status: s.status,
+              }))
+            )
+          }>
           <Download size={14} /> Export
         </Btn>
         <Btn onClick={onClose}>Close</Btn>

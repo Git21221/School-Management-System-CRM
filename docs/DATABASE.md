@@ -2,7 +2,7 @@
 
 > **Status:** Design reference for your Node + SQL backend. Align tables with `src/types/index.ts`.
 
-Recommended: **PostgreSQL**. Naming: `snake_case` columns, `uuid` or `serial` primary keys.
+Recommended: **MySQL 8.0+** (matches `backend/sql/` scripts and MySQL Workbench). Naming: `snake_case` columns.
 
 ---
 

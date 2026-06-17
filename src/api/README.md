@@ -31,15 +31,22 @@ src/api/
 - SQL tables → [`docs/DATABASE.md`](../../docs/DATABASE.md)
 - Types → [`src/types/index.ts`](../types/index.ts)
 
-## Enable API mode
+## API mode
 
-```env
-# .env.local
-VITE_API_URL=http://localhost:5000/api
-VITE_API_ENABLED=true
+API mode is **on by default**. Start the stack with:
+
+```bash
+pnpm dev:all
 ```
 
-Until `VITE_API_ENABLED=true`, pages keep using Zustand persist (offline demo mode).
+Optional `.env.local`:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+# VITE_API_ENABLED=false   # offline demo with local Zustand seed data
+```
+
+Set `VITE_API_ENABLED=false` only when the backend is unavailable and you want the built-in demo dataset.
 
 ## Integration pattern (later)
 

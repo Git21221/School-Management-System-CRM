@@ -14,6 +14,7 @@ import {
   ExamMarkRecord,
   InstituteSettings,
   AttnStatus,
+  FeeReminder,
 } from "@/types";
 import {
   INIT_STUDENTS,
@@ -29,6 +30,8 @@ import {
   INIT_INSTITUTE_SETTINGS,
 } from "@/constants/data";
 import { attendanceRecordId } from "./attendanceHelpers";
+import { reconcileEnrollmentCounts } from "./enrollmentSync";
+import { API_ENABLED } from "@/api/config";
 
 type ListUpdater<T> = T[] | ((prev: T[]) => T[]);
 
@@ -46,6 +49,7 @@ interface AppState {
   attendanceRecords: AttendanceRecord[];
   examMarks: ExamMarkRecord[];
   settings: InstituteSettings;
+  feeReminders: FeeReminder[];
 
   setUser: (user: User | null) => void;
   setActive: (active: string) => void;
@@ -101,49 +105,95 @@ interface AppState {
 
   setSettings: (settings: InstituteSettings) => void;
   updateSettings: (patch: Partial<InstituteSettings>) => void;
+
+  queueFeeReminders: (reminders: FeeReminder[]) => void;
+  markRemindersSent: (ids: string[]) => void;
 }
 
-const STORE_VERSION = 2;
+const STORE_VERSION = 4;
+
+function withReconciledCounts(
+  students: Student[],
+  courses: Course[],
+  batches: Batch[]
+): Pick<AppState, "students" | "courses" | "batches"> {
+  const { courses: nextCourses, batches: nextBatches } = reconcileEnrollmentCounts(
+    students,
+    courses,
+    batches
+  );
+  return { students, courses: nextCourses, batches: nextBatches };
+}
+
+const API_EMPTY_SETTINGS: InstituteSettings = {
+  name: "",
+  phone: "",
+  email: "",
+  address: "",
+  registrationNo: "",
+  academicYear: "",
+  logoUrl: "",
+  receipt: {
+    prefix: "",
+    startingNumber: "",
+    footerText: "",
+    showLogo: "Yes",
+    printFormat: "A4",
+  },
+  certificate: {
+    prefix: "",
+    authorisedBy: "",
+    bodyText: "",
+  },
+};
 
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       user: null,
       active: "dashboard",
-      students: INIT_STUDENTS,
-      courses: INIT_COURSES,
-      batches: INIT_BATCHES,
-      faculty: INIT_FACULTY,
-      exams: INIT_EXAMS,
-      payments: INIT_PAYMENTS,
-      notifs: INIT_NOTIFS,
-      certificates: INIT_CERTIFICATES,
-      attendanceRecords: INIT_ATTENDANCE_RECORDS,
-      examMarks: INIT_EXAM_MARKS,
-      settings: INIT_INSTITUTE_SETTINGS,
+      students: API_ENABLED ? [] : INIT_STUDENTS,
+      courses: API_ENABLED ? [] : INIT_COURSES,
+      batches: API_ENABLED ? [] : INIT_BATCHES,
+      faculty: API_ENABLED ? [] : INIT_FACULTY,
+      exams: API_ENABLED ? [] : INIT_EXAMS,
+      payments: API_ENABLED ? [] : INIT_PAYMENTS,
+      notifs: API_ENABLED ? [] : INIT_NOTIFS,
+      certificates: API_ENABLED ? [] : INIT_CERTIFICATES,
+      attendanceRecords: API_ENABLED ? [] : INIT_ATTENDANCE_RECORDS,
+      examMarks: API_ENABLED ? [] : INIT_EXAM_MARKS,
+      settings: API_ENABLED ? API_EMPTY_SETTINGS : INIT_INSTITUTE_SETTINGS,
+      feeReminders: [],
 
       setUser: (user) => set({ user }),
       setActive: (active) => set({ active }),
 
       setStudents: (students) =>
-        set((state) => ({
-          students:
-            typeof students === "function"
-              ? students(state.students)
-              : students,
-        })),
+        set((state) => {
+          const nextStudents =
+            typeof students === "function" ? students(state.students) : students;
+          return withReconciledCounts(nextStudents, state.courses, state.batches);
+        }),
       addStudent: (student) =>
-        set((state) => ({ students: [student, ...state.students] })),
+        set((state) =>
+          withReconciledCounts([student, ...state.students], state.courses, state.batches)
+        ),
       updateStudent: (student) =>
-        set((state) => ({
-          students: state.students.map((s) =>
-            s.id === student.id ? student : s
-          ),
-        })),
+        set((state) =>
+          withReconciledCounts(
+            state.students.map((s) => (s.id === student.id ? student : s)),
+            state.courses,
+            state.batches
+          )
+        ),
       deleteStudent: (id) =>
-        set((state) => ({
-          students: state.students.filter((s) => s.id !== id),
-        })),
+        set((state) =>
+          withReconciledCounts(
+            state.students.filter((s) => s.id !== id),
+            state.courses,
+            state.batches
+          )
+        ),
 
       setCourses: (courses) =>
         set((state) => ({
@@ -294,7 +344,9 @@ export const useAppStore = create<AppState>()(
       updateExamMark: (studentId, patch) =>
         set((state) => ({
           examMarks: state.examMarks.map((m) =>
-            m.studentId === studentId ? { ...m, ...patch } : m
+            m.studentId === studentId && (!patch.examId || m.examId === patch.examId)
+              ? { ...m, ...patch }
+              : m
           ),
         })),
 
@@ -312,23 +364,62 @@ export const useAppStore = create<AppState>()(
               : state.settings.certificate,
           },
         })),
+
+      queueFeeReminders: (reminders) =>
+        set((state) => ({
+          feeReminders: [...reminders, ...state.feeReminders],
+        })),
+      markRemindersSent: (ids) =>
+        set((state) => ({
+          feeReminders: state.feeReminders.map(r =>
+            ids.includes(r.id) ? { ...r, status: "sent" as const } : r
+          ),
+        })),
     }),
     {
       name: "school-management-crm-store",
       version: STORE_VERSION,
+      partialize: (state) =>
+        API_ENABLED
+          ? { user: state.user, active: state.active }
+          : {
+              user: state.user,
+              active: state.active,
+              students: state.students,
+              courses: state.courses,
+              batches: state.batches,
+              faculty: state.faculty,
+              exams: state.exams,
+              payments: state.payments,
+              notifs: state.notifs,
+              certificates: state.certificates,
+              attendanceRecords: state.attendanceRecords,
+              examMarks: state.examMarks,
+              settings: state.settings,
+              feeReminders: state.feeReminders,
+            },
       migrate: (persisted, version) => {
         const state = (persisted ?? {}) as Partial<AppState>;
+        if (API_ENABLED && version < STORE_VERSION) {
+          return {
+            user: state.user ?? null,
+            active: state.active ?? "dashboard",
+          } as AppState;
+        }
         if (version < STORE_VERSION) {
           return {
             ...state,
+            user: state.user ?? null,
+            active: state.active ?? "dashboard",
             certificates: state.certificates ?? INIT_CERTIFICATES,
             attendanceRecords:
               state.attendanceRecords ?? INIT_ATTENDANCE_RECORDS,
             examMarks: state.examMarks ?? INIT_EXAM_MARKS,
             settings: state.settings ?? INIT_INSTITUTE_SETTINGS,
-          };
+            feeReminders: state.feeReminders ?? [],
+          } as AppState;
         }
-        return state as AppState;
+        return { ...state, user: state.user ?? null, active: state.active ?? "dashboard" } as AppState;
       },
     }
   )

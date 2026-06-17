@@ -5,6 +5,8 @@ export type Student = {
   email: string;
   course: string;
   batch: string;
+  courseId?: string;
+  batchId?: string;
   guardian: string;
   guardianPhone: string;
   address: string;
@@ -72,6 +74,7 @@ export type FacultyMember = {
   attendance: number;
   experience: string;
   qualification: string;
+  photo?: string;
   todayStatus?: AttnStatus;
   todayDate?: string;
 };
@@ -95,13 +98,12 @@ export type Exam = {
   status: string;
 };
 
-/** Module marks per student — maps to aggregated `exam_marks` / results API */
+/** Per-exam score for one student — maps to `exam_marks` in SQL */
 export type ExamMarkRecord = {
+  examId: string;
   studentId: string;
   studentName: string;
-  m1: number;
-  m2: number;
-  m3: number;
+  marks: number;
   grade: string;
 };
 
@@ -114,6 +116,16 @@ export type Payment = {
   mode: string;
   date: string;
   remarks?: string;
+};
+
+/** Queued fee reminder — delivery handled by backend in Part C */
+export type FeeReminder = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  amount: number;
+  queuedAt: string;
+  status: "pending" | "sent";
 };
 
 /** Issued certificate — maps to `certificates` in SQL */

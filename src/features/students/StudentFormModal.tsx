@@ -11,6 +11,8 @@ import {
   selectCls,
 } from "@/components/shared";
 import { TODAY } from "@/lib/utils";
+import { studentFormSchema } from "@/lib/validation/student";
+import { validateForm } from "@/lib/validation/formErrors";
 
 export function StudentFormModal({
   title,
@@ -63,12 +65,17 @@ export function StudentFormModal({
   };
 
   const handleSave = () => {
-    if (!f.name.trim() || !f.course || !f.batch) {
-      toast.error("Name, Course and Batch are required");
+    const payload = {
+      ...f,
+      feesTotal: initial ? f.feesTotal : (courses.find(c => c.name === f.course)?.fees ?? 0),
+      feesPaid: initial ? f.feesPaid : 0,
+    };
+    const checked = validateForm(studentFormSchema, payload);
+    if (!checked.ok) {
+      toast.error(checked.message);
       return;
     }
-    const courseObj = courses.find(c => c.name === f.course);
-    onSave({ ...f, feesTotal: initial ? f.feesTotal : (courseObj?.fees ?? 0) });
+    onSave(checked.data);
   };
 
   return (

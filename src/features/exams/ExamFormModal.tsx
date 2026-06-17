@@ -4,6 +4,8 @@ import { Plus } from "lucide-react";
 import { Course, Batch, Exam } from "@/types";
 import { Modal, FormField, Btn, inputCls, selectCls } from "@/components/shared";
 import { TODAY } from "@/lib/utils";
+import { examFormSchema } from "@/lib/validation/exam";
+import { validateForm } from "@/lib/validation/formErrors";
 
 export interface ExamFormModalProps {
   courses: Course[];
@@ -17,16 +19,17 @@ export function ExamFormModal({ courses, batches, onSave, onClose }: ExamFormMod
   const up = (k: string) => (v: string) => setF(p => ({ ...p, [k]: v }));
 
   const handleSave = () => {
-    if (!f.title.trim() || !f.course || !f.batch) {
-      toast.error("Title, Course and Batch are required");
+    const checked = validateForm(examFormSchema, f);
+    if (!checked.ok) {
+      toast.error(checked.message);
       return;
     }
     onSave({
-      title: f.title,
-      course: f.course,
-      batch: f.batch,
-      date: f.date,
-      max: parseInt(f.max) || 100,
+      title: checked.data.title,
+      course: checked.data.course,
+      batch: checked.data.batch,
+      date: checked.data.date,
+      max: checked.data.max,
     });
   };
 

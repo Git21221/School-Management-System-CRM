@@ -1,0 +1,7 @@
+-- Legacy file — use: npm run db:setup
+-- That command reads INSTITUTE_NAME from .env (or prompts you) and creates:
+--   • database name (from institute name, or DATABASE_NAME override)
+--   • DB user + password
+--   • tables (001_init.sql)
+--   • your institute profile + admin account (password you choose)
+--   • optional sample rows (seed_sample_data.sql)

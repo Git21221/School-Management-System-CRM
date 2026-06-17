@@ -10,6 +10,7 @@ import {
   Edit2,
   Download,
   Printer,
+  Trash2,
 } from "lucide-react";
 import { FacultyMember, Course, AttnStatus } from "@/types";
 import {
@@ -18,12 +19,17 @@ import {
   Card,
   AvatarChip as Avatar,
   StatusBadge as Badge,
+  ConfirmDialog,
 } from "@/components/shared";
 import { genId, handleExport, TODAY, FMT } from "@/lib/utils";
+import { resolveUploadUrl } from "@/lib/uploads";
 import { FacultyFormModal } from "./FacultyFormModal";
 import { FacultyProfileModal, FacultyTodayBadge } from "./FacultyProfileModal";
 import { SalarySlipModal } from "./SalarySlipModal";
 import { FacultyAttendanceModal } from "./FacultyAttendanceModal";
+import { API_ENABLED } from "@/api/config";
+import { facultyService } from "@/api/services/faculty.service";
+import { ApiError } from "@/api/client";
 
 const FACULTY_BASE_DAYS = 24;
 
@@ -39,6 +45,19 @@ export function FacultyPage({ faculty, setFaculty, courses }: FacultyPageProps) 
   const [editTarget, setEditTarget] = useState<FacultyMember | null>(null);
   const [slipTarget, setSlipTarget] = useState<FacultyMember | null>(null);
   const [showAttendance, setShowAttendance] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<FacultyMember | null>(null);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      if (API_ENABLED) await facultyService.remove(deleteTarget.id);
+      setFaculty(prev => prev.filter(f => f.id !== deleteTarget.id));
+      toast.success(`${deleteTarget.name} removed from faculty`);
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to delete faculty");
+    }
+  };
 
   const handleMarkAttendance = (marks: Record<string, AttnStatus>, date: string) => {
     setFaculty(prev =>
@@ -59,18 +78,38 @@ export function FacultyPage({ faculty, setFaculty, courses }: FacultyPageProps) 
     setShowAttendance(false);
   };
 
-  const handleAdd = (data: Omit<FacultyMember, "id" | "attendance">) => {
+  const handleAdd = async (data: Omit<FacultyMember, "id" | "attendance">) => {
     const id = genId("FAC", faculty);
-    setFaculty(prev => [{ id, attendance: 100, ...data }, ...prev]);
-    toast.success(`${data.name} added to faculty!`);
-    setShowAdd(false);
+    try {
+      if (API_ENABLED) {
+        const member = await facultyService.create(data, id);
+        setFaculty(prev => [{ ...member, attendance: 100 }, ...prev]);
+      } else {
+        setFaculty(prev => [{ id, attendance: 100, ...data }, ...prev]);
+      }
+      toast.success(`${data.name} added to faculty!`);
+      setShowAdd(false);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to add faculty");
+    }
   };
 
-  const handleEdit = (data: Omit<FacultyMember, "id" | "attendance">) => {
+  const handleEdit = async (data: Omit<FacultyMember, "id" | "attendance">) => {
     if (!editTarget) return;
-    setFaculty(prev => prev.map(f => (f.id === editTarget.id ? { ...f, ...data } : f)));
-    toast.success("Faculty record updated.");
-    setEditTarget(null);
+    try {
+      if (API_ENABLED) {
+        const member = await facultyService.update(editTarget.id, data);
+        setFaculty(prev =>
+          prev.map(f => (f.id === editTarget.id ? { ...f, ...member } : f))
+        );
+      } else {
+        setFaculty(prev => prev.map(f => (f.id === editTarget.id ? { ...f, ...data } : f)));
+      }
+      toast.success("Faculty record updated.");
+      setEditTarget(null);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to update faculty");
+    }
   };
 
   return (
@@ -99,7 +138,11 @@ export function FacultyPage({ faculty, setFaculty, courses }: FacultyPageProps) 
         {faculty.map(f => (
           <Card key={f.id} className="p-5">
             <div className="flex items-start gap-3 mb-3">
-              <Avatar name={f.name} size="lg" />
+              <Avatar
+                name={f.name}
+                size="lg"
+                src={f.photo ? resolveUploadUrl(f.photo) : undefined}
+              />
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-foreground">{f.name}</h3>
                 <p className="text-xs text-muted-foreground">{f.subject}</p>
@@ -163,6 +206,13 @@ export function FacultyPage({ faculty, setFaculty, courses }: FacultyPageProps) 
               >
                 <Edit2 size={11} /> Edit
               </Btn>
+              <Btn
+                variant="secondary"
+                size="sm"
+                onClick={() => setDeleteTarget(f)}
+              >
+                <Trash2 size={11} />
+              </Btn>
             </div>
           </Card>
         ))}
@@ -174,7 +224,19 @@ export function FacultyPage({ faculty, setFaculty, courses }: FacultyPageProps) 
             Salary Records –{" "}
             {new Date().toLocaleString("default", { month: "long", year: "numeric" })}
           </h3>
-          <Btn variant="secondary" size="sm" onClick={() => handleExport("Salary Records")}>
+          <Btn variant="secondary" size="sm" onClick={() =>
+              handleExport(
+                "Salary Records",
+                faculty.map(f => ({
+                  "Faculty ID": f.id,
+                  Name: f.name,
+                  Subject: f.subject,
+                  Attendance: `${f.attendance}%`,
+                  "Monthly Salary": f.salary,
+                  Status: "Paid",
+                }))
+              )
+            }>
             <Download size={13} /> Export
           </Btn>
         </div>
@@ -211,7 +273,11 @@ export function FacultyPage({ faculty, setFaculty, courses }: FacultyPageProps) 
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{f.id}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Avatar name={f.name} size="sm" />
+                      <Avatar
+                        name={f.name}
+                        size="sm"
+                        src={f.photo ? resolveUploadUrl(f.photo) : undefined}
+                      />
                       <span className="text-sm font-semibold text-foreground">{f.name}</span>
                     </div>
                   </td>
@@ -271,6 +337,10 @@ export function FacultyPage({ faculty, setFaculty, courses }: FacultyPageProps) 
             setEditTarget(profileTarget);
             setProfileTarget(null);
           }}
+          onUpdate={updated => {
+            setProfileTarget(updated);
+            setFaculty(prev => prev.map(item => (item.id === updated.id ? updated : item)));
+          }}
           onClose={() => setProfileTarget(null)}
         />
       )}
@@ -280,6 +350,15 @@ export function FacultyPage({ faculty, setFaculty, courses }: FacultyPageProps) 
           faculty={faculty}
           onSave={handleMarkAttendance}
           onClose={() => setShowAttendance(false)}
+        />
+      )}
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Remove Faculty"
+          message={`Remove ${deleteTarget.name} from the faculty list?`}
+          confirmLabel="Remove"
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </div>

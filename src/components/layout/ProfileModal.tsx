@@ -2,7 +2,13 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { Users, Lock, Settings, Camera, CheckCircle2, X } from "lucide-react";
 import { User } from "@/types";
-import { ROLES } from "@/constants/roles";
+import { ROLES, DEMO_USERS } from "@/constants/roles";
+import { API_ENABLED } from "@/api/config";
+import { authService } from "@/api/services/auth.service";
+import { ApiError } from "@/api/client";
+import { changePasswordFormSchema } from "@/lib/validation/auth";
+import { profileAccountSchema } from "@/lib/validation/profile";
+import { validateForm } from "@/lib/validation/formErrors";
 import {
   AvatarChip,
   Btn,
@@ -68,39 +74,53 @@ export function ProfileModal({ user, setUser, onClose }: ProfileModalProps) {
   };
 
   const saveAccount = () => {
-    if (!form.name.trim() || !form.email.trim()) {
-      toast.error("Name and email are required");
+    const checked = validateForm(profileAccountSchema, form);
+    if (!checked.ok) {
+      toast.error(checked.message);
       return;
     }
     setUser((u) =>
       u
         ? {
             ...u,
-            name: form.name.trim(),
-            email: form.email.trim(),
-            phone: form.phone,
-            photo: form.photo || undefined,
+            name: checked.data.name,
+            email: checked.data.email,
+            phone: (checked.data.phone as string | null | undefined) ?? undefined,
+            photo: checked.data.photo || undefined,
           }
         : u
     );
     toast.success("Profile updated successfully");
   };
 
-  const saveSecurity = () => {
-    if (!security.current || !security.next) {
-      toast.error("Enter your current and new password");
+  const saveSecurity = async () => {
+    const checked = validateForm(changePasswordFormSchema, {
+      currentPassword: security.current,
+      newPassword: security.next,
+      confirmPassword: security.confirm,
+    });
+    if (!checked.ok) {
+      toast.error(checked.message);
       return;
     }
-    if (security.next.length < 6) {
-      toast.error("New password must be at least 6 characters");
-      return;
+
+    try {
+      if (API_ENABLED) {
+        await authService.changePassword(checked.data.currentPassword, checked.data.newPassword);
+      } else {
+        const demo = DEMO_USERS.find(
+          u => u.email.toLowerCase() === user.email.toLowerCase()
+        );
+        if (!demo || demo.password !== security.current) {
+          toast.error("Current password is incorrect");
+          return;
+        }
+      }
+      setSecurity({ current: "", next: "", confirm: "" });
+      toast.success("Password updated successfully");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to update password");
     }
-    if (security.next !== security.confirm) {
-      toast.error("New passwords do not match");
-      return;
-    }
-    setSecurity({ current: "", next: "", confirm: "" });
-    toast.success("Password updated successfully");
   };
 
   const savePrefs = () => toast.success("Preferences saved");
