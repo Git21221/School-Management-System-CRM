@@ -1,16 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
-import { createFacultySchema, updateFacultySchema } from './faculty.schema.js';
+import { createFacultySchema, updateFacultySchema } from './faculty.schema.ts';
 import {
   getAllFaculty,
   getFacultyById,
   createFaculty,
   updateFaculty,
   deleteFaculty,
-} from './faculty.service.js';
-import { NotFoundError, UnauthorizedError, ValidationError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
-import { photoUpload, validateMagicBytes } from '../../shared/utils/photo-upload.js';
+} from './faculty.service.ts';
+import { NotFoundError, UnauthorizedError, ValidationError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
+import { photoUpload, validateMagicBytes } from '../../shared/utils/photo-upload.ts';
 
 export const upload = photoUpload;
 

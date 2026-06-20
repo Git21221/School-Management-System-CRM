@@ -1,7 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { env } from '../../config/env.js';
+import { env } from '../../config/env.ts';
 
 export function validateMagicBytes(filePath: string): boolean {
   try {

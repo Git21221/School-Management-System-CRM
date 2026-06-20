@@ -5,8 +5,8 @@ import {
   AppError,
   UnauthorizedError,
   ValidationError,
-} from '../shared/errors/app-error.js';
-import { errorMiddleware } from '../middleware/error.middleware.js';
+} from '../shared/errors/app-error.ts';
+import { errorMiddleware } from '../middleware/error.middleware.ts';
 
 vi.mock('../config/logger.js', () => ({
   logger: {

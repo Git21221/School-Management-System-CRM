@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
-import { pool } from '../config/database.js';
-import { hashPassword } from '../shared/utils/crypto.js';
+import { pool } from '../config/database.ts';
+import { hashPassword } from '../shared/utils/crypto.ts';
 
 dotenv.config();
 

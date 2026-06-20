@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { createExamSchema, updateExamSchema, saveMarksSchema } from './exams.schema.js';
+import { createExamSchema, updateExamSchema, saveMarksSchema } from './exams.schema.ts';
 import {
   getAllExams,
   getExamById,
@@ -9,9 +9,9 @@ import {
   getExamMarksList,
   saveExamMarks,
   getExamResultsDetails,
-} from './exams.service.js';
-import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
+} from './exams.service.ts';
+import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
 
 export async function listExams(_req: Request, res: Response, next: NextFunction) {
   try {

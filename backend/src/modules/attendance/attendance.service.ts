@@ -1,5 +1,5 @@
-import { pool } from '../../config/database.js';
-import { BulkUpsertAttendanceInput } from './attendance.schema.js';
+import { pool } from '../../config/database.ts';
+import { BulkUpsertAttendanceInput } from './attendance.schema.ts';
 
 export async function getAttendance(batchId: string, date: string) {
   // Return students of the batch joined with their attendance record for that date

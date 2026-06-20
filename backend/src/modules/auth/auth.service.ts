@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
-import { pool } from '../../config/database.js';
-import { logger } from '../../config/logger.js';
-import { queryOne } from '../../shared/db/query.js';
+import { pool } from '../../config/database.ts';
+import { logger } from '../../config/logger.ts';
+import { queryOne } from '../../shared/db/query.ts';
 import {
   comparePassword,
   hashPassword,
@@ -10,11 +10,11 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
   JWTPayload,
-} from '../../shared/utils/crypto.js';
-import { UnauthorizedError, NotFoundError } from '../../shared/errors/app-error.js';
-import { isJwtVerificationError } from '../../shared/utils/jwt-errors.js';
-import { createAuditLog } from '../audit/audit.service.js';
-import type { RefreshTokenRow, UserPasswordRow, UserProfileRow, UserRow } from '../../shared/types/db.js';
+} from '../../shared/utils/crypto.ts';
+import { UnauthorizedError, NotFoundError } from '../../shared/errors/app-error.ts';
+import { isJwtVerificationError } from '../../shared/utils/jwt-errors.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
+import type { RefreshTokenRow, UserPasswordRow, UserProfileRow, UserRow } from '../../shared/types/db.ts';
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');

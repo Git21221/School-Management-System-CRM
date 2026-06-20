@@ -9,8 +9,8 @@ import {
   getSalarySlip,
   uploadPhoto,
   upload,
-} from './faculty.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+} from './faculty.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

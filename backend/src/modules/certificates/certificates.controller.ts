@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { issueCertificateSchema } from './certificates.schema.js';
-import { getAllCertificates, getCertificateByNo, createCertificate } from './certificates.service.js';
-import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
+import { issueCertificateSchema } from './certificates.schema.ts';
+import { getAllCertificates, getCertificateByNo, createCertificate } from './certificates.service.ts';
+import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
 
 export async function listCertificates(_req: Request, res: Response, next: NextFunction) {
   try {

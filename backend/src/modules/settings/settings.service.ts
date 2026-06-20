@@ -1,5 +1,5 @@
-import { pool } from '../../config/database.js';
-import { UpdateInstituteInput, UpdateReceiptConfigInput, UpdateCertificateConfigInput, PageLayoutInput } from './settings.schema.js';
+import { pool } from '../../config/database.ts';
+import { UpdateInstituteInput, UpdateReceiptConfigInput, UpdateCertificateConfigInput, PageLayoutInput } from './settings.schema.ts';
 
 export async function getSettings() {
   const [rows] = await pool.query('SELECT * FROM institute_settings WHERE id = 1') as any[];

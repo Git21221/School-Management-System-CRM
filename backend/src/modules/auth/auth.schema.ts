@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { v } from '../../shared/validation/fields.js';
+import { v } from '../../shared/validation/fields.ts';
 
 export const loginSchema = z.object({
   email: v.email(),

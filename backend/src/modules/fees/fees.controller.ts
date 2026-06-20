@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { collectPaymentSchema } from './fees.schema.js';
-import { getDueStudents, getPaymentHistory, getPaymentByReceipt, collectFee } from './fees.service.js';
-import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
+import { collectPaymentSchema } from './fees.schema.ts';
+import { getDueStudents, getPaymentHistory, getPaymentByReceipt, collectFee } from './fees.service.ts';
+import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
 
 export async function listDue(_req: Request, res: Response, next: NextFunction) {
   try {

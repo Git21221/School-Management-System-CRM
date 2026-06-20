@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { listDue, history, getReceipt, collect, sendReminders } from './fees.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+import { listDue, history, getReceipt, collect, sendReminders } from './fees.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

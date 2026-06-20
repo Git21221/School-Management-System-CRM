@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UnauthorizedError } from '../shared/errors/app-error.js';
-import { generateRefreshToken } from '../shared/utils/crypto.js';
-import { refreshSession } from '../modules/auth/auth.service.js';
-import * as queryModule from '../shared/db/query.js';
-import type { RefreshTokenRow, UserProfileRow } from '../shared/types/db.js';
-import { pool } from '../config/database.js';
+import { UnauthorizedError } from '../shared/errors/app-error.ts';
+import { generateRefreshToken } from '../shared/utils/crypto.ts';
+import { refreshSession } from '../modules/auth/auth.service.ts';
+import * as queryModule from '../shared/db/query.ts';
+import type { RefreshTokenRow, UserProfileRow } from '../shared/types/db.ts';
+import { pool } from '../config/database.ts';
 
 vi.mock('../modules/audit/audit.service.js', () => ({
   createAuditLog: vi.fn().mockResolvedValue(undefined),

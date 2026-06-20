@@ -3,8 +3,8 @@ import {
   instituteToDatabaseName,
   defaultDbUser,
   defaultAdminEmail,
-} from './slug.js';
-import { askRequired, askPassword, askYesNo, ask } from './prompt.js';
+} from './slug.ts';
+import { askRequired, askPassword, askYesNo, ask } from './prompt.ts';
 
 export interface SetupConfig {
   instituteName: string;

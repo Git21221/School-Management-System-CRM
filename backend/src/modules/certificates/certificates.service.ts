@@ -1,6 +1,6 @@
-import { pool } from '../../config/database.js';
-import { IssueCertificateInput } from './certificates.schema.js';
-import { ConflictError, NotFoundError } from '../../shared/errors/app-error.js';
+import { pool } from '../../config/database.ts';
+import { IssueCertificateInput } from './certificates.schema.ts';
+import { ConflictError, NotFoundError } from '../../shared/errors/app-error.ts';
 
 export async function getAllCertificates() {
   const [rows] = await pool.query(`

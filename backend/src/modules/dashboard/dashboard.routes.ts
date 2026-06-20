@@ -12,8 +12,8 @@ import {
   reportAttendance,
   reportFaculty,
   exportCSV,
-} from './dashboard.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+} from './dashboard.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

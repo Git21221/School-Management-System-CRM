@@ -1,14 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { env } from '../../config/env.js';
-import { loginSchema, changePasswordSchema } from './auth.schema.js';
+import { env } from '../../config/env.ts';
+import { loginSchema, changePasswordSchema } from './auth.schema.ts';
 import {
   loginUser,
   refreshSession,
   logoutUser,
   changeUserPassword,
   getUserById,
-} from './auth.service.js';
-import { UnauthorizedError } from '../../shared/errors/app-error.js';
+} from './auth.service.ts';
+import { UnauthorizedError } from '../../shared/errors/app-error.ts';
 
 const COOKIE_NAME = 'refreshToken';
 

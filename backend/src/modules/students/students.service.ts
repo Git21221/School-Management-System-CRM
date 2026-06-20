@@ -1,6 +1,6 @@
-import { pool } from '../../config/database.js';
-import { CreateStudentInput, UpdateStudentInput } from './students.schema.js';
-import { ConflictError, NotFoundError } from '../../shared/errors/app-error.js';
+import { pool } from '../../config/database.ts';
+import { CreateStudentInput, UpdateStudentInput } from './students.schema.ts';
+import { ConflictError, NotFoundError } from '../../shared/errors/app-error.ts';
 
 export interface StudentFilters {
   search?: string;

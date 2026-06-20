@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { list, read, readAll, remove } from './notifications.controller.js';
-import { requireAuth } from '../../middleware/auth.middleware.js';
+import { list, read, readAll, remove } from './notifications.controller.ts';
+import { requireAuth } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

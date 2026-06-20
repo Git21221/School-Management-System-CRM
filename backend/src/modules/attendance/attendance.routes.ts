@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { listAttendance, listRecords, upsert, report } from './attendance.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+import { listAttendance, listRecords, upsert, report } from './attendance.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

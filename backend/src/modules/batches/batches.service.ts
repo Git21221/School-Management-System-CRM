@@ -1,6 +1,6 @@
-import { pool } from '../../config/database.js';
-import { CreateBatchInput, UpdateBatchInput } from './batches.schema.js';
-import { ConflictError, NotFoundError } from '../../shared/errors/app-error.js';
+import { pool } from '../../config/database.ts';
+import { CreateBatchInput, UpdateBatchInput } from './batches.schema.ts';
+import { ConflictError, NotFoundError } from '../../shared/errors/app-error.ts';
 
 export async function getAllBatches() {
   const [rows] = await pool.query(`

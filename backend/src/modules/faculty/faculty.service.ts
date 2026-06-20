@@ -1,6 +1,6 @@
-import { pool } from '../../config/database.js';
-import { CreateFacultyInput, UpdateFacultyInput } from './faculty.schema.js';
-import { ConflictError, NotFoundError } from '../../shared/errors/app-error.js';
+import { pool } from '../../config/database.ts';
+import { CreateFacultyInput, UpdateFacultyInput } from './faculty.schema.ts';
+import { ConflictError, NotFoundError } from '../../shared/errors/app-error.ts';
 
 export async function getAllFaculty() {
   const [rows] = await pool.query('SELECT * FROM faculty ORDER BY created_at DESC');

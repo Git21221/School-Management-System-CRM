@@ -10,8 +10,8 @@ import {
   buildDatabaseUrl,
   jwtSecretsForEnv,
   type SetupConfig,
-} from './setup/config.js';
-import { backendEnvPath, upsertEnvFile } from './setup/env-file.js';
+} from './setup/config.ts';
+import { backendEnvPath, upsertEnvFile } from './setup/env-file.ts';
 
 dotenv.config();
 

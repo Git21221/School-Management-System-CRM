@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { listCourses, getCourse, create, update, remove } from './courses.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+import { listCourses, getCourse, create, update, remove } from './courses.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { generateAccessToken, type JWTPayload } from '../shared/utils/crypto.js';
+import { generateAccessToken, type JWTPayload } from '../shared/utils/crypto.ts';
 
 export const superAdminUser: JWTPayload = {
   id: '11111111-1111-1111-1111-111111111100',

@@ -8,8 +8,8 @@ import {
   getMarks,
   saveMarks,
   getResults,
-} from './exams.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+} from './exams.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

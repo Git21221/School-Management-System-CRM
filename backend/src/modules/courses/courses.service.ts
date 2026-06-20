@@ -1,6 +1,6 @@
-import { pool } from '../../config/database.js';
-import { CreateCourseInput, UpdateCourseInput } from './courses.schema.js';
-import { ConflictError, NotFoundError } from '../../shared/errors/app-error.js';
+import { pool } from '../../config/database.ts';
+import { CreateCourseInput, UpdateCourseInput } from './courses.schema.ts';
+import { ConflictError, NotFoundError } from '../../shared/errors/app-error.ts';
 
 export async function getAllCourses() {
   const [rows] = await pool.query('SELECT * FROM courses ORDER BY created_at DESC');

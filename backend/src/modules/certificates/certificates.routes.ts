@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { listCertificates, getCertificate, issue } from './certificates.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+import { listCertificates, getCertificate, issue } from './certificates.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

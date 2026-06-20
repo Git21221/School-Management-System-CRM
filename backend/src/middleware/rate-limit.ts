@@ -1,5 +1,5 @@
 import rateLimit from 'express-rate-limit';
-import { env } from '../config/env.js';
+import { env } from '../config/env.ts';
 
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

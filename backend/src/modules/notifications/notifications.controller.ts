@@ -4,8 +4,8 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
   deleteNotification,
-} from './notifications.service.js';
-import { UnauthorizedError } from '../../shared/errors/app-error.js';
+} from './notifications.service.ts';
+import { UnauthorizedError } from '../../shared/errors/app-error.ts';
 
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {

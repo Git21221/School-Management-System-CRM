@@ -1,9 +1,9 @@
 import { ZodError } from 'zod';
 import multer from 'multer';
 import { Request, Response, NextFunction } from 'express';
-import { AppError, type ErrorDetail } from '../shared/errors/app-error.js';
-import { env } from '../config/env.js';
-import { logger } from '../config/logger.js';
+import { AppError, type ErrorDetail } from '../shared/errors/app-error.ts';
+import { env } from '../config/env.ts';
+import { logger } from '../config/logger.ts';
 
 interface ErrorResponseBody {
   success: false;

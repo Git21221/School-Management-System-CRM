@@ -1,4 +1,4 @@
-import { pool } from '../../config/database.js';
+import { pool } from '../../config/database.ts';
 
 export async function getUserNotifications(userId: string) {
   const [rows] = await pool.query(

@@ -16,7 +16,7 @@ const LIVE = process.env.RUN_LIVE_API_TESTS === '1';
 const describeLive = LIVE ? describe : describe.skip;
 
 // Import app after dotenv so config/env.ts reads real DATABASE_URL
-const { app } = await import('../app.js');
+const { app } = await import('../app.ts');
 
 describeLive('Live API (MySQL required)', () => {
   let adminToken: string;

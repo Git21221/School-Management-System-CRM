@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import { bulkUpsertAttendanceSchema } from './attendance.schema.js';
+import { bulkUpsertAttendanceSchema } from './attendance.schema.ts';
 import {
   getAttendance,
   upsertAttendance,
   getAttendanceReport,
   listAttendanceRecords,
-} from './attendance.service.js';
-import { UnauthorizedError, ValidationError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
+} from './attendance.service.ts';
+import { UnauthorizedError, ValidationError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
 
 export async function listAttendance(req: Request, res: Response, next: NextFunction) {
   try {

@@ -1,5 +1,5 @@
 import type { RowDataPacket } from 'mysql2/promise';
-import { pool } from '../../config/database.js';
+import { pool } from '../../config/database.ts';
 
 export async function queryRows<T extends RowDataPacket>(
   sql: string,

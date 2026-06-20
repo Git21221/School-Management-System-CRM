@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-import { adminUser, superAdminUser, staffUser, facultyUser, bearer } from './helpers.js';
+import { adminUser, superAdminUser, staffUser, facultyUser, bearer } from './helpers.ts';
 
 const { poolQuery } = vi.hoisted(() => {
   const poolQuery = vi.fn().mockImplementation((sql: string) => {
@@ -31,7 +31,7 @@ vi.mock('../modules/audit/audit.service.js', () => ({
   createAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { app } from '../app.js';
+import { app } from '../app.ts';
 
 describe('API readiness — route smoke tests', () => {
   beforeEach(() => {

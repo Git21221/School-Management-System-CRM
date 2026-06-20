@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { list, getStudent, create, update, remove, uploadPhoto, upload } from './students.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+import { list, getStudent, create, update, remove, uploadPhoto, upload } from './students.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

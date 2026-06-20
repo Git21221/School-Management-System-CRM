@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { listBatches, getBatch, getStudents, create, update, remove } from './batches.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
+import { listBatches, getBatch, getStudents, create, update, remove } from './batches.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
 
 const router = Router();
 

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
-import { updateInstituteSchema, updateReceiptConfigSchema, updateCertificateConfigSchema, pageIdSchema, pageLayoutSchema } from './settings.schema.js';
+import { updateInstituteSchema, updateReceiptConfigSchema, updateCertificateConfigSchema, pageIdSchema, pageLayoutSchema } from './settings.schema.ts';
 import {
   getSettings,
   updateInstituteSettings,
@@ -9,10 +9,10 @@ import {
   updateCertificateSettings,
   getPageLayout,
   updatePageLayout,
-} from './settings.service.js';
-import { UnauthorizedError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
-import { env } from '../../config/env.js';
+} from './settings.service.ts';
+import { UnauthorizedError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
+import { env } from '../../config/env.ts';
 
 /** Delete an old upload file from disk if it exists and belongs to the /uploads/ folder. */
 function deleteOldLogo(logoUrl: string | null | undefined): void {

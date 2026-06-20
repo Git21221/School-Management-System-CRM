@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError, UnauthorizedError, ForbiddenError } from '../shared/errors/app-error.js';
-import { verifyAccessToken } from '../shared/utils/crypto.js';
-import { isJwtVerificationError } from '../shared/utils/jwt-errors.js';
+import { AppError, UnauthorizedError, ForbiddenError } from '../shared/errors/app-error.ts';
+import { verifyAccessToken } from '../shared/utils/crypto.ts';
+import { isJwtVerificationError } from '../shared/utils/jwt-errors.ts';
 
 export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   try {

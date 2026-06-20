@@ -10,8 +10,8 @@ import {
   getFeesReport,
   getAttendanceReportAll,
   getFacultyReport,
-} from './dashboard.service.js';
-import { NotFoundError } from '../../shared/errors/app-error.js';
+} from './dashboard.service.ts';
+import { NotFoundError } from '../../shared/errors/app-error.ts';
 
 export async function stats(_req: Request, res: Response, next: NextFunction) {
   try {

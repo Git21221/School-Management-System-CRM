@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { v } from '../../shared/validation/fields.js';
+import { v } from '../../shared/validation/fields.ts';
 
 export const createStudentSchema = z.object({
   id: v.entityId('Student ID'),

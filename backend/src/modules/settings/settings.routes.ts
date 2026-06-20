@@ -9,9 +9,9 @@ import {
   updateCertificate,
   getPageLayoutHandler,
   updatePageLayoutHandler,
-} from './settings.controller.js';
-import { requireAuth, requireRoles } from '../../middleware/auth.middleware.js';
-import { upload } from '../students/students.controller.js';
+} from './settings.controller.ts';
+import { requireAuth, requireRoles } from '../../middleware/auth.middleware.ts';
+import { upload } from '../students/students.controller.ts';
 
 const router = Router();
 

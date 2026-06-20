@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { createBatchSchema, updateBatchSchema } from './batches.schema.js';
+import { createBatchSchema, updateBatchSchema } from './batches.schema.ts';
 import {
   getAllBatches,
   getBatchById,
@@ -7,9 +7,9 @@ import {
   createBatch,
   updateBatch,
   deleteBatch,
-} from './batches.service.js';
-import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
+} from './batches.service.ts';
+import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
 
 export async function listBatches(_req: Request, res: Response, next: NextFunction) {
   try {

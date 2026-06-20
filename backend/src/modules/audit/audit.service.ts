@@ -1,5 +1,5 @@
-import { pool } from '../../config/database.js';
-import { logger } from '../../config/logger.js';
+import { pool } from '../../config/database.ts';
+import { logger } from '../../config/logger.ts';
 
 export interface AuditLogParams {
   userId?: string | null;

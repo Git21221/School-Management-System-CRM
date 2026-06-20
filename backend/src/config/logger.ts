@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { env } from './env.js';
+import { env } from './env.ts';
 
 const devFormat = winston.format.combine(
   winston.format.colorize(),

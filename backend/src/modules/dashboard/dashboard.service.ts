@@ -1,4 +1,4 @@
-import { pool } from '../../config/database.js';
+import { pool } from '../../config/database.ts';
 
 function inferClassStatus(timing: string): string {
   const match = timing.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);

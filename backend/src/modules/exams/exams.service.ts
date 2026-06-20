@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
-import { pool } from '../../config/database.js';
-import { CreateExamInput, UpdateExamInput, SaveMarksInput } from './exams.schema.js';
-import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/app-error.js';
+import { pool } from '../../config/database.ts';
+import { CreateExamInput, UpdateExamInput, SaveMarksInput } from './exams.schema.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/app-error.ts';
 
 export async function getAllExams() {
   const [rows] = await pool.query(`

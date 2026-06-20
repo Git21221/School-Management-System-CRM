@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { createCourseSchema, updateCourseSchema } from './courses.schema.js';
+import { createCourseSchema, updateCourseSchema } from './courses.schema.ts';
 import {
   getAllCourses,
   getCourseById,
@@ -7,9 +7,9 @@ import {
   createCourse,
   updateCourse,
   deleteCourse,
-} from './courses.service.js';
-import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
+} from './courses.service.ts';
+import { NotFoundError, UnauthorizedError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
 
 export async function listCourses(_req: Request, res: Response, next: NextFunction) {
   try {

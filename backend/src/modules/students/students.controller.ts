@@ -1,16 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
-import { createStudentSchema, updateStudentSchema } from './students.schema.js';
+import { createStudentSchema, updateStudentSchema } from './students.schema.ts';
 import {
   getStudentsList,
   getStudentById,
   createStudent,
   updateStudent,
   deleteStudentSoft,
-} from './students.service.js';
-import { NotFoundError, UnauthorizedError, ValidationError } from '../../shared/errors/app-error.js';
-import { createAuditLog } from '../audit/audit.service.js';
-import { photoUpload, validateMagicBytes } from '../../shared/utils/photo-upload.js';
+} from './students.service.ts';
+import { NotFoundError, UnauthorizedError, ValidationError } from '../../shared/errors/app-error.ts';
+import { createAuditLog } from '../audit/audit.service.ts';
+import { photoUpload, validateMagicBytes } from '../../shared/utils/photo-upload.ts';
 
 export const upload = photoUpload;
 export async function list(req: Request, res: Response, next: NextFunction) {
