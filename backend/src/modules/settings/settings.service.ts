@@ -1,5 +1,5 @@
 import { pool } from '../../config/database.js';
-import { UpdateInstituteInput, UpdateReceiptConfigInput, UpdateCertificateConfigInput } from './settings.schema.js';
+import { UpdateInstituteInput, UpdateReceiptConfigInput, UpdateCertificateConfigInput, PageLayoutInput } from './settings.schema.js';
 
 export async function getSettings() {
   const [rows] = await pool.query('SELECT * FROM institute_settings WHERE id = 1') as any[];
@@ -82,4 +82,39 @@ export async function updateCertificateSettings(data: UpdateCertificateConfigInp
   );
 
   return mergedConfig;
+}
+
+function parseJsonColumn<T>(value: unknown, fallback: T): T {
+  if (value == null) return fallback;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return value as T;
+}
+
+export async function getPageLayouts(): Promise<Record<string, unknown>> {
+  const current = await getSettings();
+  if (!current) return {};
+  return parseJsonColumn<Record<string, unknown>>(current.page_layouts, {});
+}
+
+export async function getPageLayout(pageId: string) {
+  const layouts = await getPageLayouts();
+  return layouts[pageId] ?? null;
+}
+
+export async function updatePageLayout(pageId: string, layout: PageLayoutInput) {
+  const layouts = await getPageLayouts();
+  const merged = { ...layouts, [pageId]: layout };
+
+  await pool.query(
+    'UPDATE institute_settings SET page_layouts = ? WHERE id = 1',
+    [JSON.stringify(merged)]
+  );
+
+  return layout;
 }

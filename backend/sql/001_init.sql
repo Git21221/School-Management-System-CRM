@@ -28,7 +28,7 @@ CREATE TABLE users (
   name          VARCHAR(120) NOT NULL,
   email         VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role          ENUM('admin', 'staff', 'faculty') NOT NULL DEFAULT 'staff',
+  role          ENUM('admin', 'staff', 'faculty', 'super_admin') NOT NULL DEFAULT 'staff',
   phone         VARCHAR(20)  NULL,
   photo_url     TEXT         NULL,
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -46,6 +46,7 @@ CREATE TABLE institute_settings (
   logo_url         MEDIUMTEXT   NULL,
   receipt_config   JSON         NULL,
   certificate_config JSON       NULL,
+  page_layouts     JSON         NULL,
   updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT chk_single_settings CHECK (id = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

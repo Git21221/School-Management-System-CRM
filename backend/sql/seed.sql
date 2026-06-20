@@ -1,2 +1,0 @@
--- Deprecated — use npm run db:setup instead.
--- Institute and admin user are created from your INSTITUTE_NAME and ADMIN_PASSWORD in .env.

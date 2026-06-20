@@ -18,14 +18,14 @@ describe("LoginPage", () => {
     expect(onLogin).not.toHaveBeenCalled();
   });
 
-  it("logs in with demo admin quick sign-in", async () => {
+  it("logs in with demo super admin quick sign-in", async () => {
     const onLogin = vi.fn();
     render(<LoginPage onLogin={onLogin} />);
-    await userEvent.click(screen.getAllByText("Admin")[0]);
+    await userEvent.click(screen.getAllByText("Super Admin")[0]);
     await userEvent.click(screen.getAllByRole("button", { name: /sign in/i })[0]);
     await waitFor(() =>
       expect(onLogin).toHaveBeenCalledWith(
-        expect.objectContaining({ email: "admin@techacademy.com", role: "admin" })
+        expect.objectContaining({ email: "admin@techacademy.com", role: "super_admin" })
       )
     );
   });

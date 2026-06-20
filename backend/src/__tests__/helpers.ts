@@ -1,6 +1,13 @@
 import { vi } from 'vitest';
 import { generateAccessToken, type JWTPayload } from '../shared/utils/crypto.js';
 
+export const superAdminUser: JWTPayload = {
+  id: '11111111-1111-1111-1111-111111111100',
+  name: 'Super Admin',
+  email: 'super@techacademy.com',
+  role: 'super_admin',
+};
+
 export const adminUser: JWTPayload = {
   id: '11111111-1111-1111-1111-111111111101',
   name: 'Aarav Menon',

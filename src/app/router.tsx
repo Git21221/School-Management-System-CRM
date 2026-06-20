@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useEffect } from "react";
+import { Suspense, lazy, useState, useEffect, useCallback } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -80,6 +80,21 @@ function ProtectedLayout() {
   const [showLogout, setShowLogout] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
+  const handleLogout = useCallback(async () => {
+    setShowLogout(false);
+    if (API_ENABLED) {
+      try {
+        await authService.logout();
+      } catch {
+        /* clear local session even if API logout fails */
+      }
+    }
+    setUser(null);
+    navigate("/login");
+  }, [setUser, navigate]);
+
+  useSessionTimeout(!!user, handleLogout);
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -99,21 +114,6 @@ function ProtectedLayout() {
     }
     navigate(id === "dashboard" ? "/" : `/${id}`);
   };
-
-  const handleLogout = async () => {
-    setShowLogout(false);
-    if (API_ENABLED) {
-      try {
-        await authService.logout();
-      } catch {
-        /* clear local session even if API logout fails */
-      }
-    }
-    setUser(null);
-    navigate("/login");
-  };
-
-  useSessionTimeout(true, handleLogout);
 
   return (
     <AppShell

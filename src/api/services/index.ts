@@ -10,3 +10,4 @@ export { certificatesService } from "./certificates.service";
 export { notificationsService } from "./notifications.service";
 export { settingsService } from "./settings.service";
 export { dashboardService } from "./dashboard.service";
+export { pageLayoutService } from "./pageLayout.service";

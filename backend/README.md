@@ -55,10 +55,9 @@ backend/
 ├── README.md                     # Backend developer guide
 ├── SECURITY.md                   # Threat model & security instructions
 │
-├── sql/                          # Raw SQL migrations (run manually in MySQL)
-│   ├── 000_create_database.sql
+├── sql/                          # SQL schema + optional seed data
 │   ├── 001_init.sql
-│   └── seed.sql
+│   └── seed_sample_data.sql
 │
 ├── vitest.config.ts              # Test runner configuration
 │
@@ -252,22 +251,25 @@ POST /api/auth/reset-password    → Verify token, hash new password, revoke ref
 
 ## RBAC — Role & Permission Matrix
 
-**Implemented roles:** `admin`, `staff`, `faculty` (see `users.role` enum in `sql/001_init.sql`).
+**Implemented roles:** `super_admin`, `admin`, `staff`, `faculty` (see `users.role` enum in `sql/001_init.sql`).
+
+The setup account is created as **`super_admin`** (full access plus dashboard layout editing). `super_admin` is treated as `admin` for all existing route guards.
 
 Routes use `requireAuth` and `requireRoles(...)` middleware. Fine-grained per-route guards vary by module — see each `*.routes.ts` file.
 
-| Permission | Admin | Staff | Faculty |
-|---|:---:|:---:|:---:|
-| Manage faculty | ✅ | ✅ | ❌ |
-| Manage students | ✅ | ✅ | ❌ |
-| View students | ✅ | ✅ | ✅ (own batch routes) |
-| Manage courses & batches | ✅ | ✅ | ❌ |
-| Mark attendance | ✅ | ✅ | ✅ |
-| Manage fees | ✅ | ✅ | ❌ |
-| Manage exams | ✅ | ✅ | ✅ (own batch) |
-| Issue certificates | ✅ | ✅ | ❌ |
-| View reports / dashboard | ✅ | ✅ | ❌ |
-| Manage settings | ✅ | ❌ | ❌ |
+| Permission | Super Admin | Admin | Staff | Faculty |
+|---|:---:|:---:|:---:|:---:|
+| Manage faculty | ✅ | ✅ | ❌ | ❌ |
+| Manage students | ✅ | ✅ | ✅ | ❌ |
+| View students | ✅ | ✅ | ✅ | ✅ (own batch routes) |
+| Manage courses & batches | ✅ | ✅ | ✅ | ❌ |
+| Mark attendance | ✅ | ✅ | ✅ | ✅ |
+| Manage fees | ✅ | ✅ | ✅ | ❌ |
+| Manage exams | ✅ | ✅ | ✅ | ✅ (own batch) |
+| Issue certificates | ✅ | ✅ | ❌ | ❌ |
+| View reports / dashboard | ✅ | ✅ | ✅ | ❌ |
+| Manage settings | ✅ | ✅ | ❌ | ❌ |
+| Edit dashboard layout (PATCH page-layout) | ✅ | ❌ | ❌ | ❌ |
 
 > **Note:** Student portal roles and a dedicated audit-log viewer API are documented in the product roadmap but not yet implemented in this backend.
 
@@ -369,7 +371,7 @@ Once the Express API is ready, switch the frontend state client to fetch calls:
 
 ## Quick Start
 
-**MySQL Workbench users:** see [`MYSQL_WORKBENCH.md`](MYSQL_WORKBENCH.md) — run `sql/000_create_database.sql`, `001_init.sql`, then optional `seed.sql`.
+**MySQL Workbench users:** see [`MYSQL_WORKBENCH.md`](MYSQL_WORKBENCH.md) — run `npm run db:setup` once (creates database, schema, and admin account).
 
 ```bash
 cd backend
@@ -406,11 +408,13 @@ pnpm dev:api      # backend :5000
 
 ### Database setup
 
-SQL migrations are applied manually (no ORM migration runner yet):
+Use the interactive setup script (recommended):
 
-1. `sql/000_create_database.sql` — create database
-2. `sql/001_init.sql` — core schema
-3. `sql/seed.sql` — optional demo data
+```bash
+npm run db:setup
+```
+
+This creates the database, runs `sql/001_init.sql`, and optionally `sql/seed_sample_data.sql`.
 
 See [`MYSQL_WORKBENCH.md`](MYSQL_WORKBENCH.md) for step-by-step instructions.
 

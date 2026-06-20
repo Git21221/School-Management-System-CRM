@@ -14,7 +14,7 @@ export interface JWTPayload {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'staff' | 'faculty';
+  role: 'admin' | 'staff' | 'faculty' | 'super_admin';
 }
 
 const accessTokenOptions: SignOptions = {

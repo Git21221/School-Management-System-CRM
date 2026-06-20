@@ -1,6 +1,6 @@
 import type { RowDataPacket } from 'mysql2/promise';
 
-export type UserRole = 'admin' | 'staff' | 'faculty';
+export type UserRole = 'admin' | 'staff' | 'faculty' | 'super_admin';
 
 export interface UserRow extends RowDataPacket {
   id: string;

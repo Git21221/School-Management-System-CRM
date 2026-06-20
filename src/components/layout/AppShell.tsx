@@ -14,6 +14,8 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
+import { useAppStore } from "@/store/useAppStore";
+
 export function AppShell({
   user,
   current,
@@ -24,6 +26,7 @@ export function AppShell({
   onShowLogout,
   children,
 }: AppShellProps) {
+  const editMode = useAppStore((s) => s.editMode);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
 
@@ -76,6 +79,11 @@ export function AppShell({
 
         {/* Page content */}
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-6">
+          {editMode && user.role === "super_admin" && (
+            <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-primary font-medium">
+              Edit mode — layout changes affect all users after you save.
+            </div>
+          )}
           {children}
         </main>
       </div>

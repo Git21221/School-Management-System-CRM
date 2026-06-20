@@ -7,11 +7,20 @@ import {
   Bell,
   Users,
   LogOut,
+  Pencil,
+  Save,
+  RotateCcw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { User, Student } from "@/types";
 import { ROLES, canAccess } from "@/constants/roles";
 import { NAV } from "@/constants/navigation";
-import { AvatarChip } from "@/components/shared";
+import { AvatarChip, Btn } from "@/components/shared";
+import { useAppStore } from "@/store/useAppStore";
+import { API_ENABLED } from "@/api/config";
+import { pageLayoutService } from "@/api/services/pageLayout.service";
+import { DEFAULT_DASHBOARD_LAYOUT } from "@/lib/defaultDashboardLayout";
+import { ApiError } from "@/api/client";
 
 interface AppHeaderProps {
   user: User;
@@ -24,8 +33,6 @@ interface AppHeaderProps {
   onShowLogout: () => void;
 }
 
-import { useAppStore } from "@/store/useAppStore";
-
 export function AppHeader({
   user,
   current,
@@ -37,6 +44,16 @@ export function AppHeader({
   onShowLogout,
 }: AppHeaderProps) {
   const instituteName = useAppStore((s) => s.settings.name);
+  const updateSettings = useAppStore((s) => s.updateSettings);
+  const editMode = useAppStore((s) => s.editMode);
+  const toggleEditMode = useAppStore((s) => s.toggleEditMode);
+  const layoutDirty = useAppStore((s) => s.layoutDirty);
+  const dashboardLayoutDraft = useAppStore((s) => s.dashboardLayoutDraft);
+  const dashboardLayoutSaved = useAppStore((s) => s.dashboardLayoutSaved);
+  const setDashboardLayoutDraft = useAppStore((s) => s.setDashboardLayoutDraft);
+  const setDashboardLayoutSaved = useAppStore((s) => s.setDashboardLayoutSaved);
+  const setLayoutDirty = useAppStore((s) => s.setLayoutDirty);
+
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -61,6 +78,40 @@ export function AppHeader({
     if (moduleHit) onNavigate(moduleHit.id);
   };
 
+  const handleSaveLayout = async () => {
+    if (!dashboardLayoutDraft) return;
+    try {
+      if (API_ENABLED) {
+        const saved = await pageLayoutService.save("dashboard", dashboardLayoutDraft);
+        setDashboardLayoutSaved(saved);
+        setDashboardLayoutDraft(JSON.parse(JSON.stringify(saved)));
+      } else {
+        updateSettings({ pageLayouts: { dashboard: dashboardLayoutDraft } });
+        setDashboardLayoutSaved(JSON.parse(JSON.stringify(dashboardLayoutDraft)));
+      }
+      setLayoutDirty(false);
+      toast.success("Dashboard layout saved.");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to save layout");
+    }
+  };
+
+  const handleDiscardLayout = () => {
+    const base = dashboardLayoutSaved ?? DEFAULT_DASHBOARD_LAYOUT;
+    setDashboardLayoutDraft(JSON.parse(JSON.stringify(base)));
+    setLayoutDirty(false);
+    toast.message("Changes discarded.");
+  };
+
+  const handleResetLayout = () => {
+    setDashboardLayoutDraft(JSON.parse(JSON.stringify(DEFAULT_DASHBOARD_LAYOUT)));
+    setLayoutDirty(true);
+    toast.message("Reset to default layout. Save to apply for everyone.");
+  };
+
+  const isSuperAdmin = user.role === "super_admin";
+  const onDashboard = current === "dashboard";
+
   return (
     <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 md:px-6 shrink-0">
       <div className="flex items-center gap-3">
@@ -79,7 +130,36 @@ export function AppHeader({
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        {isSuperAdmin && onDashboard && (
+          <div className="hidden sm:flex items-center gap-1.5 mr-1">
+            <Btn
+              variant={editMode ? "primary" : "secondary"}
+              size="sm"
+              onClick={toggleEditMode}
+            >
+              <Pencil size={13} />
+              {editMode ? "Editing" : "Edit"}
+            </Btn>
+            {editMode && layoutDirty && (
+              <>
+                <Btn variant="secondary" size="sm" onClick={handleDiscardLayout}>
+                  <RotateCcw size={13} />
+                  Discard
+                </Btn>
+                <Btn size="sm" onClick={handleSaveLayout}>
+                  <Save size={13} />
+                  Save
+                </Btn>
+              </>
+            )}
+            {editMode && (
+              <Btn variant="ghost" size="sm" onClick={handleResetLayout}>
+                Reset
+              </Btn>
+            )}
+          </div>
+        )}
         <div className="relative hidden md:block">
           <Search
             size={13}

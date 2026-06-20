@@ -27,7 +27,7 @@ export interface LoginResult {
     id: string;
     name: string;
     email: string;
-    role: 'admin' | 'staff' | 'faculty';
+    role: JWTPayload['role'];
     phone: string | null;
     photoUrl: string | null;
   };

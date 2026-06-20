@@ -1,3 +1,5 @@
+import type { PageLayouts } from "./pageLayout";
+
 export type Student = {
   id: string;
   name: string;
@@ -19,7 +21,7 @@ export type Student = {
   photo?: string;
 };
 
-export type Role = "admin" | "staff" | "faculty";
+export type Role = "admin" | "staff" | "faculty" | "super_admin";
 
 export type User = {
   name: string;
@@ -164,4 +166,5 @@ export type InstituteSettings = {
   logoUrl: string;
   receipt: ReceiptSettings;
   certificate: CertificateSettings;
+  pageLayouts?: PageLayouts;
 };

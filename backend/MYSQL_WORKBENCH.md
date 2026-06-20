@@ -124,6 +124,7 @@ npm run db:setup
 | Wrong login password | Set `ADMIN_PASSWORD` in `.env`, then `npm run db:reset-admin` |
 | Want empty DB (no samples) | `SEED_SAMPLE_DATA=false` before setup |
 | Schema out of date / migration errors | Add `MYSQL_ROOT_PASSWORD` to `.env`, then `npm run db:reset` |
+| Existing DB missing `page_layouts` column | Run `sql/003_page_layouts.sql` in Workbench, or `db:reset` for dev |
 
 ---
 
@@ -132,6 +133,5 @@ npm run db:setup
 | File | Role |
 |------|------|
 | `001_init.sql` | Table definitions (no fixed database name) |
+| `003_page_layouts.sql` | Adds `page_layouts` JSON to `institute_settings` (existing DBs) |
 | `seed_sample_data.sql` | Optional demo data only |
-| `000_create_database.sql` | Legacy pointer — use `npm run db:setup` |
-| `seed.sql` | Legacy pointer — use `npm run db:setup` |

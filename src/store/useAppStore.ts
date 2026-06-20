@@ -16,6 +16,7 @@ import {
   AttnStatus,
   FeeReminder,
 } from "@/types";
+import type { PageLayout } from "@/types/pageLayout";
 import {
   INIT_STUDENTS,
   INIT_COURSES,
@@ -50,6 +51,11 @@ interface AppState {
   examMarks: ExamMarkRecord[];
   settings: InstituteSettings;
   feeReminders: FeeReminder[];
+
+  editMode: boolean;
+  dashboardLayoutDraft: PageLayout | null;
+  dashboardLayoutSaved: PageLayout | null;
+  layoutDirty: boolean;
 
   setUser: (user: User | null) => void;
   setActive: (active: string) => void;
@@ -105,6 +111,13 @@ interface AppState {
 
   setSettings: (settings: InstituteSettings) => void;
   updateSettings: (patch: Partial<InstituteSettings>) => void;
+
+  setEditMode: (on: boolean) => void;
+  toggleEditMode: () => void;
+  setDashboardLayoutDraft: (layout: PageLayout | null) => void;
+  setDashboardLayoutSaved: (layout: PageLayout | null) => void;
+  setLayoutDirty: (dirty: boolean) => void;
+  resetLayoutEditor: () => void;
 
   queueFeeReminders: (reminders: FeeReminder[]) => void;
   markRemindersSent: (ids: string[]) => void;
@@ -164,8 +177,23 @@ export const useAppStore = create<AppState>()(
       examMarks: API_ENABLED ? [] : INIT_EXAM_MARKS,
       settings: API_ENABLED ? API_EMPTY_SETTINGS : INIT_INSTITUTE_SETTINGS,
       feeReminders: [],
+      editMode: false,
+      dashboardLayoutDraft: null,
+      dashboardLayoutSaved: null,
+      layoutDirty: false,
 
-      setUser: (user) => set({ user }),
+      setUser: (user) =>
+        set(
+          user
+            ? { user }
+            : {
+                user: null,
+                editMode: false,
+                dashboardLayoutDraft: null,
+                dashboardLayoutSaved: null,
+                layoutDirty: false,
+              }
+        ),
       setActive: (active) => set({ active }),
 
       setStudents: (students) =>
@@ -362,8 +390,24 @@ export const useAppStore = create<AppState>()(
             certificate: patch.certificate
               ? { ...state.settings.certificate, ...patch.certificate }
               : state.settings.certificate,
+            pageLayouts: patch.pageLayouts
+              ? { ...state.settings.pageLayouts, ...patch.pageLayouts }
+              : state.settings.pageLayouts,
           },
         })),
+
+      setEditMode: (on) => set({ editMode: on }),
+      toggleEditMode: () => set((state) => ({ editMode: !state.editMode })),
+      setDashboardLayoutDraft: (dashboardLayoutDraft) => set({ dashboardLayoutDraft }),
+      setDashboardLayoutSaved: (dashboardLayoutSaved) => set({ dashboardLayoutSaved }),
+      setLayoutDirty: (layoutDirty) => set({ layoutDirty }),
+      resetLayoutEditor: () =>
+        set({
+          editMode: false,
+          dashboardLayoutDraft: null,
+          dashboardLayoutSaved: null,
+          layoutDirty: false,
+        }),
 
       queueFeeReminders: (reminders) =>
         set((state) => ({

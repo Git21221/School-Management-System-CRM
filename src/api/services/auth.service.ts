@@ -8,7 +8,7 @@ interface LoginResponse {
     id: string;
     name: string;
     email: string;
-    role: "admin" | "staff" | "faculty";
+    role: "admin" | "staff" | "faculty" | "super_admin";
     phone: string | null;
     photoUrl: string | null;
   };

@@ -107,8 +107,9 @@ export function LoginPage({ onLogin }: { onLogin: (user: User) => void }) {
   };
 
   const roleIcon: Record<Role, React.ElementType> = {
-    admin:   ShieldCheck,
-    staff:   Users,
+    super_admin: ShieldCheck,
+    admin: ShieldCheck,
+    staff: Users,
     faculty: ClipboardCheck,
   };
 

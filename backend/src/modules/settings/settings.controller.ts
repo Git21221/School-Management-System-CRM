@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
-import { updateInstituteSchema, updateReceiptConfigSchema, updateCertificateConfigSchema } from './settings.schema.js';
+import { updateInstituteSchema, updateReceiptConfigSchema, updateCertificateConfigSchema, pageIdSchema, pageLayoutSchema } from './settings.schema.js';
 import {
   getSettings,
   updateInstituteSettings,
   updateReceiptSettings,
   updateCertificateSettings,
+  getPageLayout,
+  updatePageLayout,
 } from './settings.service.js';
 import { UnauthorizedError } from '../../shared/errors/app-error.js';
 import { createAuditLog } from '../audit/audit.service.js';
@@ -169,6 +171,51 @@ export async function updateCertificate(req: Request, res: Response, next: NextF
       action: 'SETTINGS_CERTIFICATE_UPDATE',
       entity: 'institute_settings',
       entityId: '1',
+      afterData: updated,
+      ipAddress: req.ip || null,
+      userAgent: req.headers['user-agent'] || null,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getPageLayoutHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const pageId = pageIdSchema.parse(req.params.pageId);
+    const layout = await getPageLayout(pageId);
+
+    res.status(200).json({
+      success: true,
+      data: layout,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updatePageLayoutHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      throw new UnauthorizedError();
+    }
+
+    const pageId = pageIdSchema.parse(req.params.pageId);
+    const layout = pageLayoutSchema.parse(req.body);
+    const before = (await getPageLayout(pageId)) as Record<string, unknown> | null;
+    const updated = await updatePageLayout(pageId, layout);
+
+    await createAuditLog({
+      userId: req.user.id,
+      action: 'SETTINGS_PAGE_LAYOUT_UPDATE',
+      entity: 'institute_settings',
+      entityId: pageId,
+      beforeData: before,
       afterData: updated,
       ipAddress: req.ip || null,
       userAgent: req.headers['user-agent'] || null,

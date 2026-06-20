@@ -73,10 +73,10 @@ async function seedInstituteAndAdmin(connection: mysql.Connection, config: Setup
     ]
   );
 
-  await connection.query('DELETE FROM users WHERE role = ?', ['admin']);
+  await connection.query('DELETE FROM users WHERE role IN (?, ?)', ['admin', 'super_admin']);
   await connection.query(
     `INSERT INTO users (id, name, email, password_hash, role, phone)
-     VALUES (?, ?, ?, ?, 'admin', ?)`,
+     VALUES (?, ?, ?, ?, 'super_admin', ?)`,
     [adminId, config.adminName, config.adminEmail, passwordHash, config.adminPhone]
   );
 }

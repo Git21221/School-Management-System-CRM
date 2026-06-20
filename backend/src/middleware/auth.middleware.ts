@@ -29,13 +29,22 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   }
 }
 
-export function requireRoles(...roles: ('admin' | 'staff' | 'faculty')[]) {
+type AppRole = 'admin' | 'staff' | 'faculty' | 'super_admin';
+
+function roleMatches(userRole: AppRole, allowed: AppRole): boolean {
+  if (userRole === allowed) return true;
+  if (allowed === 'admin' && userRole === 'super_admin') return true;
+  return false;
+}
+
+export function requireRoles(...roles: AppRole[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new UnauthorizedError('Authentication required'));
     }
 
-    if (!roles.includes(req.user.role)) {
+    const userRole = req.user.role as AppRole;
+    if (!roles.some((role) => roleMatches(userRole, role))) {
       return next(new ForbiddenError('Access denied: insufficient permissions'));
     }
 

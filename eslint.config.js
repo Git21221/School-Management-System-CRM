@@ -11,9 +11,9 @@ export default [
   // ── Ignore patterns ────────────────────────────────────────────────────────
   {
     ignores: [
-      "dist/**",
+      "**/dist/**",
       "node_modules/**",
-      "graphify-out/**",
+      "scripts/**",
       "*.py",
       "vite.config.ts",
       "postcss.config.mjs",

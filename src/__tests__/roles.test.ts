@@ -7,6 +7,11 @@ describe("canAccess", () => {
     expect(canAccess("admin", "faculty")).toBe(true);
   });
 
+  it("grants super_admin all modules", () => {
+    expect(canAccess("super_admin", "settings")).toBe(true);
+    expect(canAccess("super_admin", "dashboard")).toBe(true);
+  });
+
   it("restricts staff from admin-only modules", () => {
     expect(canAccess("staff", "students")).toBe(true);
     expect(canAccess("staff", "settings")).toBe(false);
@@ -18,7 +23,7 @@ describe("canAccess", () => {
     expect(canAccess("faculty", "students")).toBe(false);
   });
 
-  it("defines three roles", () => {
-    expect(Object.keys(ROLES)).toEqual(["admin", "staff", "faculty"]);
+  it("defines four roles", () => {
+    expect(Object.keys(ROLES)).toEqual(["super_admin", "admin", "staff", "faculty"]);
   });
 });

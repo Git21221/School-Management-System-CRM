@@ -266,15 +266,13 @@ school-management-crm/
 │   ├── API.md             # REST contract (shared with backend)
 │   ├── DATABASE.md        # SQL schema reference
 │   └── screenshots/       # README screenshots (auto-generated)
-├── guidelines/            # Product spec & design guidelines
-│   ├── Guidelines.md
-│   └── Institute_Management.pdf
+├── guidelines/            # Product specification (PDF)
 ├── public/                # Static assets
 ├── scripts/
 │   └── capture-screenshots.mjs
 ├── src/
 │   ├── api/               # HTTP client scaffold (VITE_API_ENABLED=false by default)
-│   ├── app/               # App shell, router, shadcn/ui primitives
+│   ├── app/               # App shell and router
 │   ├── components/
 │   │   ├── layout/        # AppShell, Sidebar, Header, ErrorBoundary
 │   │   └── shared/        # Reusable UI (Btn, Card, Modal, StatCard, …)
@@ -435,7 +433,7 @@ Workflow file: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - **Protected routes** — unauthenticated users are redirected to `/login`.
 - **Error boundaries** — each route is wrapped in an `ErrorBoundary` to prevent full-app crashes.
 - **Role-based navigation** — sidebar items filtered via `canAccess()` in `src/constants/roles.ts`.
-- **Shared design system** — custom components in `src/components/shared/` plus Radix/shadcn primitives in `src/app/components/ui/`.
+- **Shared design system** — custom components in `src/components/shared/`.
 
 ---
 
@@ -465,7 +463,6 @@ Optional environment variables:
 The full product specification is available in:
 
 - [`guidelines/Institute_Management.pdf`](guidelines/Institute_Management.pdf) — Feature specification document v1.0
-- [`guidelines/Guidelines.md`](guidelines/Guidelines.md) — Design and development guidelines
 
 ---
 

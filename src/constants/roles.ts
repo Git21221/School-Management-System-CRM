@@ -5,6 +5,12 @@ export const ROLES: Record<
   Role,
   { label: string; access: string; modules: string[] | "all"; tint: string }
 > = {
+  super_admin: {
+    label: "Super Admin",
+    access: "Full Access + Layout Editor",
+    modules: "all",
+    tint: "#1a3a5c",
+  },
   admin: {
     label: "Admin",
     access: "Full Access",
@@ -39,7 +45,7 @@ export const DEMO_USERS: Array<User & { password: string }> = [
     name: "Aarav Menon",
     email: "admin@techacademy.com",
     password: "admin123",
-    role: "admin",
+    role: "super_admin",
     phone: "+91 98450 10001",
   },
   {

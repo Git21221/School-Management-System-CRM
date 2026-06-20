@@ -11,7 +11,6 @@ package-lock.json
 yarn.lock
 
 # Generated / tooling
-graphify-out/
 *.py
 default_shadcn_theme.css
 

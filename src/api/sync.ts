@@ -28,7 +28,7 @@ export interface SyncedAppData {
   examMarks: Awaited<ReturnType<typeof loadExamMarks>>;
 }
 
-type SyncRole = "admin" | "staff" | "faculty";
+type SyncRole = "admin" | "staff" | "faculty" | "super_admin";
 
 const EMPTY_SETTINGS: SyncedAppData["settings"] = {
   name: "",
@@ -131,15 +131,15 @@ function enrichBatchesWithCounts(batches: Batch[], students: SyncedAppData["stud
 export async function syncAppData(role: SyncRole): Promise<SyncedAppData> {
   const [courses, batches, students, faculty, payments, exams, certificates, notifs, settings] =
     await Promise.all([
-      optionalByRole(["admin", "staff"], role, () => coursesService.list(), []),
-      optionalByRole(["admin", "staff"], role, () => batchesService.list(), []),
-      optionalByRole(["admin", "staff"], role, () => studentsService.list(), []),
-      optionalByRole(["admin"], role, () => facultyService.list(), []),
-      optionalByRole(["admin", "staff"], role, () => feesService.listPayments(), []),
-      optionalByRole(["admin", "faculty"], role, () => examsService.list(), []),
-      optionalByRole(["admin"], role, () => certificatesService.list(), []),
+      optionalByRole(["admin", "staff", "super_admin"], role, () => coursesService.list(), []),
+      optionalByRole(["admin", "staff", "super_admin"], role, () => batchesService.list(), []),
+      optionalByRole(["admin", "staff", "super_admin"], role, () => studentsService.list(), []),
+      optionalByRole(["admin", "super_admin"], role, () => facultyService.list(), []),
+      optionalByRole(["admin", "staff", "super_admin"], role, () => feesService.listPayments(), []),
+      optionalByRole(["admin", "faculty", "super_admin"], role, () => examsService.list(), []),
+      optionalByRole(["admin", "super_admin"], role, () => certificatesService.list(), []),
       notificationsService.list(),
-      optionalByRole(["admin", "staff", "faculty"], role, () => settingsService.getInstitute(), EMPTY_SETTINGS),
+      optionalByRole(["admin", "staff", "faculty", "super_admin"], role, () => settingsService.getInstitute(), EMPTY_SETTINGS),
     ]);
 
   const enrichedBatches = enrichBatchesWithCounts(batches, students);

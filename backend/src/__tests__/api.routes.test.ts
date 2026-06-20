@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-import { adminUser, staffUser, facultyUser, bearer } from './helpers.js';
+import { adminUser, superAdminUser, staffUser, facultyUser, bearer } from './helpers.js';
 
 const { poolQuery } = vi.hoisted(() => {
   const poolQuery = vi.fn().mockImplementation((sql: string) => {
@@ -119,6 +119,22 @@ describe('API readiness — route smoke tests', () => {
     });
   });
 
+  describe('Super admin token — same access as admin', () => {
+    it('GET /api/faculty', async () => {
+      const res = await request(app)
+        .get('/api/faculty')
+        .set('Authorization', bearer(superAdminUser));
+      expect(res.status).toBe(200);
+    });
+
+    it('GET /api/settings/page-layout/dashboard', async () => {
+      const res = await request(app)
+        .get('/api/settings/page-layout/dashboard')
+        .set('Authorization', bearer(superAdminUser));
+      expect(res.status).toBe(200);
+    });
+  });
+
   describe('Staff token — allowed reads', () => {
     it('GET /api/students', async () => {
       const res = await request(app)
@@ -163,6 +179,22 @@ describe('API readiness — route smoke tests', () => {
         .set('Authorization', bearer(staffUser))
         .send({ studentId: 'STU-001', courseId: 'CRS-001' });
       expect(res.status).toBe(403);
+    });
+
+    it('admin cannot PATCH page layout (super_admin only)', async () => {
+      const res = await request(app)
+        .patch('/api/settings/page-layout/dashboard')
+        .set('Authorization', bearer(adminUser))
+        .send({ widgets: [] });
+      expect(res.status).toBe(403);
+    });
+
+    it('super_admin can PATCH page layout', async () => {
+      const res = await request(app)
+        .patch('/api/settings/page-layout/dashboard')
+        .set('Authorization', bearer(superAdminUser))
+        .send({ widgets: [] });
+      expect(res.status).toBe(200);
     });
   });
 });
